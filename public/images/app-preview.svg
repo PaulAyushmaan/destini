@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="800" viewBox="0 0 800 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="800" rx="40" fill="#1A1A1A"/>
+  
+  <!-- Status Bar -->
+  <rect x="40" y="40" width="720" height="40" rx="20" fill="#2A2A2A"/>
+  <text x="60" y="65" fill="#FFFFFF" font-family="Arial" font-size="14">9:41</text>
+  <text x="700" y="65" fill="#FFFFFF" font-family="Arial" font-size="14">📶</text>
+  
+  <!-- Header -->
+  <rect x="40" y="100" width="720" height="80" rx="20" fill="#2A2A2A"/>
+  <text x="60" y="150" fill="#FFFFFF" font-family="Arial" font-size="24" font-weight="bold">Destini</text>
+  <text x="60" y="180" fill="#888888" font-family="Arial" font-size="14">Your Smart Campus Transport</text>
+  
+  <!-- Main Content -->
+  <rect x="40" y="200" width="720" height="400" rx="20" fill="#2A2A2A"/>
+  
+  <!-- Map Preview -->
+  <rect x="60" y="220" width="680" height="200" rx="10" fill="#3A3A3A"/>
+  <text x="80" y="250" fill="#FFFFFF" font-family="Arial" font-size="16">📍 Campus Map</text>
+  
+  <!-- Quick Actions -->
+  <rect x="60" y="440" width="160" height="140" rx="10" fill="#3A3A3A"/>
+  <rect x="240" y="440" width="160" height="140" rx="10" fill="#3A3A3A"/>
+  <rect x="420" y="440" width="160" height="140" rx="10" fill="#3A3A3A"/>
+  <rect x="600" y="440" width="140" height="140" rx="10" fill="#3A3A3A"/>
+  
+  <!-- Action Icons -->
+  <text x="80" y="500" fill="#FFFFFF" font-family="Arial" font-size="24">🚗</text>
+  <text x="260" y="500" fill="#FFFFFF" font-family="Arial" font-size="24">🚌</text>
+  <text x="440" y="500" fill="#FFFFFF" font-family="Arial" font-size="24">🚲</text>
+  <text x="620" y="500" fill="#FFFFFF" font-family="Arial" font-size="24">⚙️</text>
+  
+  <!-- Action Labels -->
+  <text x="80" y="550" fill="#FFFFFF" font-family="Arial" font-size="12">Book Cab</text>
+  <text x="260" y="550" fill="#FFFFFF" font-family="Arial" font-size="12">Shuttle</text>
+  <text x="440" y="550" fill="#FFFFFF" font-family="Arial" font-size="12">Rentals</text>
+  <text x="620" y="550" fill="#FFFFFF" font-family="Arial" font-size="12">Settings</text>
+  
+  <!-- Bottom Navigation -->
+  <rect x="40" y="620" width="720" height="80" rx="20" fill="#2A2A2A"/>
+  <text x="60" y="670" fill="#FFFFFF" font-family="Arial" font-size="14">Home</text>
+  <text x="260" y="670" fill="#888888" font-family="Arial" font-size="14">Bookings</text>
+  <text x="460" y="670" fill="#888888" font-family="Arial" font-size="14">Wallet</text>
+  <text x="660" y="670" fill="#888888" font-family="Arial" font-size="14">Profile</text>
+  
+  <!-- Decorative Elements -->
+  <circle cx="400" cy="400" r="300" stroke="#3A3A3A" stroke-width="2" fill="none"/>
+  <circle cx="400" cy="400" r="200" stroke="#3A3A3A" stroke-width="2" fill="none"/>
+  <circle cx="400" cy="400" r="100" stroke="#3A3A3A" stroke-width="2" fill="none"/>
+</svg> 
