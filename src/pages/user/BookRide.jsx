@@ -1,25 +1,32 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useRef } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Car, MapPin, Clock, Calendar, Bus, Bike } from "lucide-react"
-import mapboxgl from 'mapbox-gl'
-import 'mapbox-gl/dist/mapbox-gl.css'
+import { Car, MapPin, Clock, Bus, Bike } from "lucide-react"
+import LiveTracking from './LiveTracking'
 
-// Replace with your Mapbox access token
-mapboxgl.accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN'
+const API_BASE = 'http://localhost:4000'; // Change to your backend base path if needed
 
 export default function BookRide() {
-  const [map, setMap] = useState(null)
   const [pickup, setPickup] = useState('')
   const [dropoff, setDropoff] = useState('')
+  const [pickupSuggestions, setPickupSuggestions] = useState([])
+  const [dropoffSuggestions, setDropoffSuggestions] = useState([])
   const [pickupCoords, setPickupCoords] = useState(null)
   const [dropoffCoords, setDropoffCoords] = useState(null)
-  const [fare, setFare] = useState(null)
-  const [step, setStep] = useState(1) // 1: Location, 2: Vehicle, 3: Confirm
+  const [distanceTime, setDistanceTime] = useState(null)
+  const [fare, setFare] = useState({
+    auto: 0,
+    car: 0,
+    moto: 0
+  })
+  const [step, setStep] = useState(1)
   const [selectedVehicle, setSelectedVehicle] = useState(null)
+  const [loadingFare, setLoadingFare] = useState(false)
+  const [bookingLoading, setBookingLoading] = useState(false)
+  const pickupTimeout = useRef()
+  const dropoffTimeout = useRef()
 
-  // Vehicle types with their pricing models
   const vehicleTypes = {
     shuttle: {
       name: "Campus Shuttle",
@@ -53,134 +60,176 @@ export default function BookRide() {
     }
   }
 
-  useEffect(() => {
-    // Initialize map
-    const mapInstance = new mapboxgl.Map({
-      container: 'map',
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [78.9629, 20.5937], // India center coordinates
-      zoom: 4
-    })
-
-    mapInstance.addControl(new mapboxgl.NavigationControl())
-    setMap(mapInstance)
-
-    return () => mapInstance.remove()
-  }, [])
-
-  const searchLocation = async (query, type) => {
+  const fetchSuggestions = async (input, setSuggestions) => {
+    if (!input || input.length < 3) return setSuggestions([])
     try {
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxgl.accessToken}`
-      )
-      const data = await response.json()
-      
-      if (data.features && data.features.length > 0) {
-        const [lng, lat] = data.features[0].center
-        const coords = { lng, lat }
-        
-        if (type === 'pickup') {
-          setPickupCoords(coords)
-          addMarker(coords, 'pickup')
-        } else {
-          setDropoffCoords(coords)
-          addMarker(coords, 'dropoff')
-        }
-
-        // If both locations are set, draw route
-        if (pickupCoords && dropoffCoords) {
-          drawRoute()
-        }
-      }
-    } catch (error) {
-      console.error('Error searching location:', error)
+      const res = await fetch(`${API_BASE}/maps/get-suggestions?input=${encodeURIComponent(input)}`, {
+        credentials: 'include'
+      })
+      const data = await res.json()
+      setSuggestions(data.suggestions || [])
+    } catch {
+      setSuggestions([])
     }
   }
 
-  const addMarker = (coords, type) => {
-    const marker = new mapboxgl.Marker({
-      color: type === 'pickup' ? '#22c55e' : '#ef4444'
-    })
-      .setLngLat([coords.lng, coords.lat])
-      .addTo(map)
-
-    // Fly to marker
-    map.flyTo({
-      center: [coords.lng, coords.lat],
-      zoom: 14
-    })
-  }
-
-  const calculateFare = (distance, vehicleType) => {
-    const vehicle = vehicleTypes[vehicleType]
-    return Math.round(vehicle.basePrice + (distance * vehicle.perKmRate))
-  }
-
-  const drawRoute = async () => {
-    if (!pickupCoords || !dropoffCoords) return
-
+  const fetchCoordinates = async (address, setCoords) => {
     try {
-      const response = await fetch(
-        `https://api.mapbox.com/directions/v5/mapbox/driving/${pickupCoords.lng},${pickupCoords.lat};${dropoffCoords.lng},${dropoffCoords.lat}?geometries=geojson&access_token=${mapboxgl.accessToken}`
-      )
-      const data = await response.json()
-
-      if (data.routes && data.routes.length > 0) {
-        const route = data.routes[0]
-        const distance = route.distance / 1000 // Convert to kilometers
-
-        // Calculate fares for all vehicle types
-        const fares = {
-          shuttle: calculateFare(distance, 'shuttle'),
-          cab: calculateFare(distance, 'cab'),
-          toto: calculateFare(distance, 'toto')
-        }
-        setFare(fares)
-
-        // Draw route on map
-        if (map.getSource('route')) {
-          map.getSource('route').setData({
-            type: 'Feature',
-            properties: {},
-            geometry: route.geometry
-          })
-        } else {
-          map.addLayer({
-            id: 'route',
-            type: 'line',
-            source: {
-              type: 'geojson',
-              data: {
-                type: 'Feature',
-                properties: {},
-                geometry: route.geometry
-              }
-            },
-            layout: {
-              'line-join': 'round',
-              'line-cap': 'round'
-            },
-            paint: {
-              'line-color': '#3b82f6',
-              'line-width': 4,
-              'line-opacity': 0.75
-            }
-          })
-        }
-      }
-    } catch (error) {
-      console.error('Error getting directions:', error)
+      const res = await fetch(`${API_BASE}/maps/get-coordinates?address=${encodeURIComponent(address)}`, {
+        credentials: 'include'
+      })
+      const data = await res.json()
+      setCoords(data) // data is the coordinates object
+    } catch {
+      setCoords(null)
     }
+  }
+
+  const fetchDistanceTime = async (origin, destination) => {
+    try {
+      const res = await fetch(`${API_BASE}/maps/get-distance-time?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`, {
+        credentials: 'include'
+      })
+      console.log(res)
+      const data = await res.json()
+      console.log(data)
+      setDistanceTime(data)
+    } catch {
+      setDistanceTime(null)
+    }
+  }
+
+  const fetchFare = async (pickup, dropoff) => {
+    setLoadingFare(true)
+    try {
+      const res = await fetch(`${API_BASE}/rides/get-fare?pickup=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(dropoff)}`, {
+        credentials: 'include'
+      })
+      const data = await res.json()
+      console.log(data)
+      setFare(data.fare || { shuttle: 0, cab: 0, toto: 0 })
+    } catch {
+      setFare({ shuttle: 0, cab: 0, toto: 0 })
+    }
+    setLoadingFare(false)
+  }
+
+  const handlePickupChange = (e) => {
+    setPickup(e.target.value)
+    setPickupCoords(null)
+    clearTimeout(pickupTimeout.current)
+    pickupTimeout.current = setTimeout(() => {
+      fetchSuggestions(e.target.value, setPickupSuggestions)
+    }, 300)
+  }
+
+  const handleDropoffChange = (e) => {
+    setDropoff(e.target.value)
+    setDropoffCoords(null)
+    clearTimeout(dropoffTimeout.current)
+    dropoffTimeout.current = setTimeout(() => {
+      fetchSuggestions(e.target.value, setDropoffSuggestions)
+    }, 300)
+  }
+
+  const selectPickup = (suggestion) => {
+    setPickup(suggestion)
+    setPickupSuggestions([])
+    fetchCoordinates(suggestion, setPickupCoords)
+  }
+
+  const selectDropoff = (suggestion) => {
+    setDropoff(suggestion)
+    setDropoffSuggestions([])
+    fetchCoordinates(suggestion, setDropoffCoords)
+  }
+
+  const handleUseCurrentLocation = async () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      // Use a reverse geocoding API (e.g., Nominatim OpenStreetMap)
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+        const data = await res.json();
+        const address = data.display_name || `${latitude},${longitude}`;
+        setPickup(address);
+        setPickupSuggestions([]);
+        setPickupCoords({ lat: latitude, lng: longitude });
+      } catch {
+        setPickup(`${latitude},${longitude}`);
+        setPickupSuggestions([]);
+        setPickupCoords({ lat: latitude, lng: longitude });
+      }
+    }, () => {
+      alert('Unable to retrieve your location.');
+    });
+  };
+
+  const handleUseCurrentDropoffLocation = async () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+        const data = await res.json();
+        const address = data.display_name || `${latitude},${longitude}`;
+        setDropoff(address);
+        setDropoffSuggestions([]);
+        setDropoffCoords({ lat: latitude, lng: longitude });
+      } catch {
+        setDropoff(`${latitude},${longitude}`);
+        setDropoffSuggestions([]);
+        setDropoffCoords({ lat: latitude, lng: longitude });
+      }
+    }, () => {
+      alert('Unable to retrieve your location.');
+    });
+  };
+
+  React.useEffect(() => {
+    if (pickupCoords && dropoffCoords) {
+      fetchDistanceTime(pickup, dropoff)
+      fetchFare(pickup, dropoff)
+    }
+  }, [pickupCoords, dropoffCoords])
+
+  const handleConfirmBooking = async () => {
+    setBookingLoading(true)
+    try {
+      const res = await fetch(`${API_BASE}/ride/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          pickup,
+          destination: dropoff,
+          vehicleType: selectedVehicle
+        })
+      })
+      if (res.ok) {
+        alert('Booking confirmed!')
+      } else {
+        alert('Booking failed!')
+      }
+    } catch {
+      alert('Booking failed!')
+    }
+    setBookingLoading(false)
   }
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
-      {/* Map */}
       <div className="lg:col-span-2 rounded-xl border overflow-hidden" style={{ height: '600px' }}>
-        <div id="map" style={{ width: '100%', height: '100%' }}></div>
+        <LiveTracking pickupCoords={pickupCoords} dropoffCoords={dropoffCoords} />
       </div>
 
-      {/* Booking Panel */}
       <div className="space-y-6">
         {step === 1 && (
           <div className="rounded-xl border bg-card p-6">
@@ -188,59 +237,76 @@ export default function BookRide() {
             <div className="space-y-4">
               <div>
                 <Label>Pickup Location</Label>
-                <div className="flex gap-2">
+                <div className="flex gap-2 relative">
                   <Input 
                     placeholder="Enter pickup location"
                     value={pickup}
-                    onChange={(e) => setPickup(e.target.value)}
+                    onChange={handlePickupChange}
                   />
                   <Button 
                     variant="outline" 
                     size="icon"
-                    onClick={() => searchLocation(pickup, 'pickup')}
+                    onClick={handleUseCurrentLocation}
+                    title="Use my current location"
                   >
                     <MapPin className="h-4 w-4" />
                   </Button>
+                  {pickupSuggestions.length > 0 && (
+                    <div className="absolute z-10 bg-white border rounded w-full top-full left-0 shadow">
+                      {pickupSuggestions.map((s, i) => (
+                        <div key={i} className="px-3 py-2 hover:bg-primary/10 cursor-pointer" onClick={() => selectPickup(s)}>{s}</div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div>
                 <Label>Drop-off Location</Label>
-                <div className="flex gap-2">
+                <div className="flex gap-2 relative">
                   <Input 
                     placeholder="Enter drop-off location"
                     value={dropoff}
-                    onChange={(e) => setDropoff(e.target.value)}
+                    onChange={handleDropoffChange}
                   />
                   <Button 
                     variant="outline" 
                     size="icon"
-                    onClick={() => searchLocation(dropoff, 'dropoff')}
+                    onClick={handleUseCurrentDropoffLocation}
+                    title="Use my current location"
                   >
                     <MapPin className="h-4 w-4" />
                   </Button>
+                  {dropoffSuggestions.length > 0 && (
+                    <div className="absolute z-10 bg-white border rounded w-full top-full left-0 shadow">
+                      {dropoffSuggestions.map((s, i) => (
+                        <div key={i} className="px-3 py-2 hover:bg-primary/10 cursor-pointer" onClick={() => selectDropoff(s)}>{s}</div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {fare && (
-                <div className="rounded-lg bg-primary/10 p-4">
-                  <h3 className="font-semibold mb-2">Estimated Fares</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span>Campus Shuttle</span>
-                      <span className="font-medium">₹{fare.shuttle}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span>Private Cab</span>
-                      <span className="font-medium">₹{fare.cab}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span>Electric Toto</span>
-                      <span className="font-medium">₹{fare.toto}</span>
-                    </div>
+              <div className="rounded-lg bg-primary/10 p-4">
+                <h3 className="font-semibold mb-2">Estimated Fares</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span>Campus Shuttle</span>
+                    <span className="font-medium">₹{loadingFare ? '...' : fare.auto}</span>
                   </div>
+                  <div className="flex justify-between items-center">
+                    <span>Private Cab</span>
+                    <span className="font-medium">₹{loadingFare ? '...' : fare.car}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Electric Toto</span>
+                    <span className="font-medium">₹{loadingFare ? '...' : fare.moto}</span>
+                  </div>
+                  {distanceTime && (
+                    <div className="text-xs text-muted-foreground mt-2">Distance: {Math.round(distanceTime.distance)}km | Time: {Math.round(distanceTime.duration)} Minutes</div>
+                  )}
                 </div>
-              )}
+              </div>
 
               <Button 
                 className="w-full" 
@@ -313,10 +379,13 @@ export default function BookRide() {
                   {selectedVehicle === 'toto' && <Bike className="h-4 w-4 text-muted-foreground" />}
                   <p className="text-sm">{vehicleTypes[selectedVehicle].name} • ₹{fare[selectedVehicle]}</p>
                 </div>
+                {distanceTime && (
+                  <div className="text-xs text-muted-foreground mt-2">Distance: {distanceTime.distance} | Time: {distanceTime.time}</div>
+                )}
               </div>
 
-              <Button className="w-full" onClick={() => alert('Booking confirmed!')}>
-                Confirm Booking
+              <Button className="w-full" onClick={handleConfirmBooking} disabled={bookingLoading}>
+                {bookingLoading ? 'Booking...' : 'Confirm Booking'}
               </Button>
             </div>
           </div>
@@ -324,4 +393,4 @@ export default function BookRide() {
       </div>
     </div>
   )
-} 
+}

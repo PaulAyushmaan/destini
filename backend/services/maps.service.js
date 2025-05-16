@@ -1,29 +1,41 @@
 const axios = require('axios');
 const captainModel = require('../models/captain.model');
 
-const ORS_API_KEY = process.env.ORS_API_KEY;
-const GEOCODE_URL = 'https://api.openrouteservice.org/geocode/search';
-const DIRECTIONS_URL = 'https://api.openrouteservice.org/v2/directions/driving-car';
+const NOMINATIM_SEARCH_URL = 'https://nominatim.openstreetmap.org/search';
+const NOMINATIM_REVERSE_URL = 'https://nominatim.openstreetmap.org/reverse';
+
+// Haversine formula for distance in km between two lat/lng
+function haversineDistance(lat1, lon1, lat2, lon2) {
+    const toRad = (x) => x * Math.PI / 180;
+    const R = 6371; // km
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
 
 /**
- * Get latitude and longitude for a given address using OpenRouteService
+ * Get latitude and longitude for a given address using OpenStreetMap Nominatim
  */
 module.exports.getAddressCoordinate = async (address) => {
     try {
-        const response = await axios.get(GEOCODE_URL, {
+        const response = await axios.get(NOMINATIM_SEARCH_URL, {
             params: {
-                api_key: ORS_API_KEY,
-                text: address,
-                size: 1
-            }
+                q: address,
+                format: 'json',
+                addressdetails: 1,
+                limit: 1
+            },
+            headers: { 'User-Agent': 'destini-cab-service/1.0' }
         });
-
-        if (response.data.features.length === 0) {
+        if (!response.data.length) {
             throw new Error('No coordinates found for this address');
         }
-
-        const [lng, lat] = response.data.features[0].geometry.coordinates;
-        return { lat, lng };
+        const { lat, lon } = response.data[0];
+        return { lat: parseFloat(lat), lng: parseFloat(lon) };
     } catch (error) {
         console.error('Geocoding Error:', error.message);
         throw error;
@@ -31,65 +43,49 @@ module.exports.getAddressCoordinate = async (address) => {
 };
 
 /**
- * Get distance and estimated travel time between two locations using OpenRouteService
+ * Get distance and estimated travel time between two locations using Haversine formula
  */
 module.exports.getDistanceTime = async (origin, destination) => {
     if (!origin || !destination) {
         throw new Error('Origin and destination are required');
     }
-
     const originCoord = await module.exports.getAddressCoordinate(origin);
     const destinationCoord = await module.exports.getAddressCoordinate(destination);
-
-    try {
-        const response = await axios.post(DIRECTIONS_URL, {
-            coordinates: [
-                [originCoord.lng, originCoord.lat],
-                [destinationCoord.lng, destinationCoord.lat]
-            ]
-        }, {
-            headers: {
-                'Authorization': ORS_API_KEY,
-                'Content-Type': 'application/json'
-            }
-        });
-        console.log(response.data);
-
-        const route = response.data.routes[0];
-        console.log(route,route.summary);
-        console.log(route.summary.distance, route.summary.duration);
-        return {
-            distance: route.summary.distance / 1000, // meters to kilometers
-            duration: route.summary.duration / 60 // seconds to minutes
-        };
-    } catch (error) {
-        console.error('Routing Error:', error.message);
-        throw error;
-    }
+    const distance = haversineDistance(
+        originCoord.lat, originCoord.lng,
+        destinationCoord.lat, destinationCoord.lng
+    );
+    // Assume average speed 30 km/h for city
+    const avgSpeed = 30; // km/h
+    const duration = (distance / avgSpeed) * 60; // minutes
+    return {
+        distance: distance, // in km
+        duration: duration // in minutes
+    };
 };
 
 /**
- * Get autocomplete location suggestions using OpenRouteService
+ * Get autocomplete location suggestions using OpenStreetMap Nominatim
  */
 module.exports.getAutoCompleteSuggestions = async (input) => {
     if (!input) {
         throw new Error('Query is required');
     }
-
     try {
-        const response = await axios.get(GEOCODE_URL, {
+        const response = await axios.get(NOMINATIM_SEARCH_URL, {
             params: {
-                api_key: ORS_API_KEY,
-                text: input,
-                size: 5
-            }
+                q: input,
+                format: 'json',
+                addressdetails: 1,
+                limit: 5,
+                countrycodes: 'IN' // Restrict to India
+            },
+            headers: { 'User-Agent': 'destini-cab-service/1.0' }
         });
-
-        if (response.data.features.length === 0) {
+        if (!response.data.length) {
             throw new Error('No suggestions found');
         }
-
-        return response.data.features.map(feature => feature.properties.label);
+        return response.data.map(feature => feature.display_name);
     } catch (error) {
         console.error('Autocomplete Error:', error.message);
         throw error;
