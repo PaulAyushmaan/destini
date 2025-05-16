@@ -20,7 +20,7 @@ export default function Dashboard() {
         <div className="rounded-xl border bg-card p-6">
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium text-muted-foreground">Today's Earnings</p>
-            <h3 className="text-2xl font-bold">$125.50</h3>
+            <h3 className="text-2xl font-bold">₹ 125.50</h3>
             <p className="text-sm text-green-500 flex items-center">
               <ArrowUp className="h-4 w-4 mr-1" />
               15% from yesterday
@@ -50,7 +50,7 @@ export default function Dashboard() {
             <div className="flex-1">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium">Sarah Johnson</h4>
-                <span className="text-sm text-muted-foreground">$18.50</span>
+                <span className="text-sm text-muted-foreground">₹180.50</span>
               </div>
               <div className="mt-2 space-y-2">
                 <div className="flex items-center gap-2 text-sm">
@@ -86,7 +86,7 @@ export default function Dashboard() {
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <h4 className="font-medium">Downtown to Campus</h4>
-                  <span className="text-sm text-muted-foreground">$15.75</span>
+                  <span className="text-sm text-muted-foreground">₹550.75</span>
                 </div>
                 <p className="text-sm text-muted-foreground">March 27, 2024 - 2:30 PM</p>
                 <div className="mt-2 flex items-center gap-2">
@@ -106,7 +106,7 @@ export default function Dashboard() {
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <h4 className="font-medium">Campus to Shopping Mall</h4>
-                  <span className="text-sm text-muted-foreground">$22.50</span>
+                  <span className="text-sm text-muted-foreground">₹220.50</span>
                 </div>
                 <p className="text-sm text-muted-foreground">March 27, 2024 - 1:15 PM</p>
                 <div className="mt-2 flex items-center gap-2">
@@ -126,7 +126,7 @@ export default function Dashboard() {
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <h4 className="font-medium">Campus to Airport</h4>
-                  <span className="text-sm text-muted-foreground">$35.00</span>
+                  <span className="text-sm text-muted-foreground">₹350.00</span>
                 </div>
                 <p className="text-sm text-muted-foreground">March 27, 2024 - 11:45 AM</p>
                 <div className="mt-2 flex items-center gap-2">
