@@ -13,7 +13,8 @@ module.exports.createRide = async (req, res) => {
     const { userId, pickup, destination, vehicleType } = req.body;
     console.log(req.body);
     try {
-        const ride = await rideService.createRide({ user: req.user._id, pickup, destination, vehicleType });
+        // Use userId from body if present, otherwise undefined
+        const ride = await rideService.createRide({ user: userId, pickup, destination, vehicleType });
         res.status(201).json(ride);
 
         const pickupCoordinates = await mapService.getAddressCoordinate(pickup);
@@ -71,14 +72,20 @@ module.exports.confirmRide = async (req, res) => {
     try {
         const ride = await rideService.confirmRide({ rideId, captain: req.captain });
 
+        // Notify the user
         sendMessageToSocketId(ride.user.socketId, {
             event: 'ride-confirmed',
             data: ride
-        })
+        });
+        
+        // Also notify the driver (captain)
+        sendMessageToSocketId(ride.captain.socketId, {
+            event: 'ride-confirmed',
+            data: ride
+        });
 
         return res.status(200).json(ride);
     } catch (err) {
-
         console.log(err);
         return res.status(500).json({ message: err.message });
     }

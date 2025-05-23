@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Car, MapPin, Clock, Bus, Bike } from "lucide-react"
 import LiveTracking from './LiveTracking'
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE = 'http://localhost:4000'; // Change to your backend base path if needed
 
@@ -26,6 +27,7 @@ export default function BookRide() {
   const [bookingLoading, setBookingLoading] = useState(false)
   const pickupTimeout = useRef()
   const dropoffTimeout = useRef()
+  const navigate = useNavigate();
 
   const vehicleTypes = {
     auto: {
@@ -203,7 +205,7 @@ export default function BookRide() {
   const handleConfirmBooking = async () => {
     setBookingLoading(true)
     try {
-      const res = await fetch(`${API_BASE}/ride/create`, {
+      const res = await fetch(`${API_BASE}/rides/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -214,7 +216,8 @@ export default function BookRide() {
         })
       })
       if (res.ok) {
-        alert('Booking confirmed!')
+        const ride = await res.json();
+        navigate('/user/awaiting-driver', { state: { ride, pickupCoords, dropoffCoords, distanceTime } });
       } else {
         alert('Booking failed!')
       }

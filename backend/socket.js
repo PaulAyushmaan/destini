@@ -16,13 +16,17 @@ function initializeSocket(server) {
         console.log(`Client connected: ${socket.id}`);
 
 
+        // In the 'join' event handler
         socket.on('join', async (data) => {
             const { userId, userType } = data;
+            console.log(`User joining: ${userType} with ID ${userId} and socket ID ${socket.id}`);
 
             if (userType === 'user') {
                 await userModel.findByIdAndUpdate(userId, { socketId: socket.id });
+                console.log(`Updated user ${userId} with socket ID ${socket.id}`);
             } else if (userType === 'captain') {
                 await captainModel.findByIdAndUpdate(userId, { socketId: socket.id });
+                console.log(`Updated captain ${userId} with socket ID ${socket.id}`);
             }
         });
 

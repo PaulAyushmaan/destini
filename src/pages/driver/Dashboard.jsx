@@ -1,8 +1,32 @@
-import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
-import { Car, Clock, MapPin, Wallet, ArrowUp, ArrowDown } from "lucide-react"
+import { useContext, useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Car, Clock, MapPin, Wallet, ArrowUp, ArrowDown } from 'lucide-react';
+import { SocketContext } from '../../../SocketContext'; // Fixed path to root directory
 
 export default function Dashboard() {
+  const { socket, confirmedRide, setConfirmedRide } = useContext(SocketContext);
+  const [currentRide, setCurrentRide] = useState(null);
+  
+  // Join the driver room when component mounts
+  useEffect(() => {
+    // Get the driver ID from your auth system
+    const driverId = localStorage.getItem('driverId'); // Adjust based on your auth implementation
+    if (driverId) {
+      socket.emit('join', { userId: driverId, userType: 'captain' });
+    }
+  }, [socket]);
+  
+  // Handle confirmed rides
+  useEffect(() => {
+    if (confirmedRide) {
+      console.log('New ride confirmation received:', confirmedRide);
+      setCurrentRide(confirmedRide);
+      // Reset the confirmedRide state to avoid duplicate processing
+      setConfirmedRide(null);
+    }
+  }, [confirmedRide, setConfirmedRide]);
+
   return (
     <div className="grid gap-6">
       {/* Status and Quick Stats */}
@@ -37,37 +61,41 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Current/Next Ride */}
+      {/* Current/Next Ride - Now dynamically populated */}
       <div className="rounded-xl border bg-card">
         <div className="border-b p-6">
           <h2 className="text-xl font-semibold">Current Ride</h2>
         </div>
         <div className="p-6">
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-              <Car className="h-5 w-5 text-primary" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium">Sarah Johnson</h4>
-                <span className="text-sm text-muted-foreground">₹180.50</span>
+          {currentRide ? (
+            <div className="flex items-start gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                <Car className="h-5 w-5 text-primary" />
               </div>
-              <div className="mt-2 space-y-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span>Campus Library</span>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">{currentRide.user?.fullname?.firstname || 'Passenger'}</h4>
+                  <span className="text-sm text-muted-foreground">₹{currentRide.fare}</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span>Student Housing Complex</span>
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span>{currentRide.pickup}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span>{currentRide.destination}</span>
+                  </div>
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <Button size="sm">Start Ride</Button>
+                  <Button size="sm" variant="outline">Contact Passenger</Button>
                 </div>
               </div>
-              <div className="mt-4 flex gap-2">
-                <Button size="sm">Start Ride</Button>
-                <Button size="sm" variant="outline">Contact Passenger</Button>
-              </div>
             </div>
-          </div>
+          ) : (
+            <p className="text-center text-muted-foreground py-4">No active rides at the moment</p>
+          )}
         </div>
       </div>
 
@@ -141,4 +169,4 @@ export default function Dashboard() {
       </div>
     </div>
   )
-} 
+}
