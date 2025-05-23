@@ -28,7 +28,7 @@ export default function BookRide() {
   const dropoffTimeout = useRef()
 
   const vehicleTypes = {
-    shuttle: {
+    auto: {
       name: "Campus Shuttle",
       icon: Bus,
       basePrice: 20,
@@ -38,7 +38,7 @@ export default function BookRide() {
       waitTime: "~10-15 mins",
       type: "shuttle"
     },
-    cab: {
+    car: {
       name: "Private Cab",
       icon: Car,
       basePrice: 50,
@@ -48,7 +48,7 @@ export default function BookRide() {
       waitTime: "~5 mins",
       type: "cab"
     },
-    toto: {
+    moto: {
       name: "Electric Toto",
       icon: Bike,
       basePrice: 30,
