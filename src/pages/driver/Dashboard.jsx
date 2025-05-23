@@ -1,8 +1,188 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Car, Clock, MapPin, Wallet, ArrowUp, ArrowDown } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast";
+import { io } from "socket.io-client";
+import axios from "axios";
 
 export default function Dashboard() {
+  const [isOnline, setIsOnline] = useState(false);
+  const [currentRide, setCurrentRide] = useState(null);
+  const [socket, setSocket] = useState(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Initialize socket connection
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast({
+        title: "Authentication Error",
+        description: "Please login to continue",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const newSocket = io('http://localhost:4000', {
+      auth: { token },
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
+    });
+
+    newSocket.on('connect', () => {
+      console.log('Connected to socket server');
+      toast({
+        title: "Connected",
+        description: "Successfully connected to server",
+      });
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+      toast({
+        title: "Connection Error",
+        description: "Failed to connect to server. Please try again.",
+        variant: "destructive"
+      });
+    });
+
+    newSocket.on('new-ride', (ride) => {
+      toast({
+        title: "New Ride Request",
+        description: `Pickup: ${ride.pickup}, Destination: ${ride.destination}`,
+        action: (
+          <div className="flex gap-2">
+            <Button 
+              size="sm" 
+              onClick={() => handleConfirmRide(ride._id)}
+            >
+              Accept
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => handleRejectRide(ride._id)}
+            >
+              Reject
+            </Button>
+          </div>
+        ),
+      });
+    });
+
+    newSocket.on('ride-confirmation-success', (ride) => {
+      setCurrentRide(ride);
+      toast({
+        title: "Ride Confirmed",
+        description: "You have successfully accepted the ride",
+      });
+    });
+
+    newSocket.on('ride-status-changed', (data) => {
+      if (currentRide && currentRide._id === data.rideId) {
+        setCurrentRide(prev => ({ ...prev, status: data.status }));
+      }
+    });
+
+    setSocket(newSocket);
+
+    return () => {
+      if (newSocket) {
+        newSocket.disconnect();
+      }
+    };
+  }, []);
+
+  const handleConfirmRide = async (rideId) => {
+    try {
+      const response = await axios.post('http://localhost:4000/rides/confirm', {
+        rideId
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.data) {
+        setCurrentRide(response.data);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to confirm ride",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleRejectRide = (rideId) => {
+    // Implement reject ride logic
+    toast({
+      title: "Ride Rejected",
+      description: "You have rejected this ride request"
+    });
+  };
+
+  const handleStartRide = async () => {
+    if (!currentRide) return;
+
+    try {
+      const response = await axios.get(`http://localhost:4000/rides/start-ride`, {
+        params: {
+          rideId: currentRide._id,
+          otp: currentRide.otp
+        },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.data) {
+        setCurrentRide(response.data);
+        toast({
+          title: "Ride Started",
+          description: "You have started the ride"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to start ride",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleEndRide = async () => {
+    if (!currentRide) return;
+
+    try {
+      const response = await axios.post('http://localhost:4000/rides/end-ride', {
+        rideId: currentRide._id
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.data) {
+        setCurrentRide(null);
+        toast({
+          title: "Ride Ended",
+          description: "You have completed the ride"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to end ride",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="grid gap-6">
       {/* Status and Quick Stats */}
@@ -13,7 +193,10 @@ export default function Dashboard() {
               <h3 className="font-semibold">Driver Status</h3>
               <p className="text-sm text-muted-foreground">Toggle availability</p>
             </div>
-            <Switch defaultChecked />
+            <Switch 
+              checked={isOnline} 
+              onCheckedChange={setIsOnline}
+            />
           </div>
         </div>
 
@@ -38,38 +221,45 @@ export default function Dashboard() {
       </div>
 
       {/* Current/Next Ride */}
-      <div className="rounded-xl border bg-card">
-        <div className="border-b p-6">
-          <h2 className="text-xl font-semibold">Current Ride</h2>
-        </div>
-        <div className="p-6">
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-              <Car className="h-5 w-5 text-primary" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium">Sarah Johnson</h4>
-                <span className="text-sm text-muted-foreground">₹180.50</span>
+      {currentRide && (
+        <div className="rounded-xl border bg-card">
+          <div className="border-b p-6">
+            <h2 className="text-xl font-semibold">Current Ride</h2>
+          </div>
+          <div className="p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                <Car className="h-5 w-5 text-primary" />
               </div>
-              <div className="mt-2 space-y-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span>Campus Library</span>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">{currentRide.user.name}</h4>
+                  <span className="text-sm text-muted-foreground">₹{currentRide.fare}</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span>Student Housing Complex</span>
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span>{currentRide.pickup}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span>{currentRide.destination}</span>
+                  </div>
                 </div>
-              </div>
-              <div className="mt-4 flex gap-2">
-                <Button size="sm">Start Ride</Button>
-                <Button size="sm" variant="outline">Contact Passenger</Button>
+                <div className="mt-4 flex gap-2">
+                  {currentRide.status === 'accepted' && (
+                    <Button size="sm" onClick={handleStartRide}>Start Ride</Button>
+                  )}
+                  {currentRide.status === 'ongoing' && (
+                    <Button size="sm" onClick={handleEndRide}>End Ride</Button>
+                  )}
+                  <Button size="sm" variant="outline">Contact Passenger</Button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Recent Activity */}
       <div className="rounded-xl border bg-card">

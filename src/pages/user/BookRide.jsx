@@ -1,11 +1,13 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Car, MapPin, Clock, Bus, Bike } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
+import { io } from "socket.io-client"
 import LiveTracking from './LiveTracking'
 
-const API_BASE = 'http://localhost:4000'; // Change to your backend base path if needed
+const API_BASE = 'http://localhost:4000';
 
 export default function BookRide() {
   const [pickup, setPickup] = useState('')
@@ -24,8 +26,109 @@ export default function BookRide() {
   const [selectedVehicle, setSelectedVehicle] = useState(null)
   const [loadingFare, setLoadingFare] = useState(false)
   const [bookingLoading, setBookingLoading] = useState(false)
+  const [currentRide, setCurrentRide] = useState(null)
+  const [socket, setSocket] = useState(null)
+  const { toast } = useToast()
   const pickupTimeout = useRef()
   const dropoffTimeout = useRef()
+
+  useEffect(() => {
+    // Initialize socket connection
+    const token = localStorage.getItem('token');
+    console.log('Token from localStorage:', token); // Debug log
+
+    if (!token) {
+      toast({
+        title: "Authentication Error",
+        description: "Please login to continue",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Verify token format
+    try {
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        throw new Error('Invalid token format');
+      }
+      console.log('Token format is valid'); // Debug log
+    } catch (error) {
+      console.error('Token validation error:', error);
+      toast({
+        title: "Invalid Token",
+        description: "Please login again",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const newSocket = io(API_BASE, {
+      auth: { token },
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      transports: ['websocket', 'polling'] // Explicitly set transport methods
+    });
+
+    newSocket.on('connect', () => {
+      console.log('Connected to socket server');
+      toast({
+        title: "Connected",
+        description: "Successfully connected to server",
+      });
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        description: error.description,
+        type: error.type
+      });
+      toast({
+        title: "Connection Error",
+        description: "Failed to connect to server. Please try again.",
+        variant: "destructive"
+      });
+    });
+
+    newSocket.on('ride-confirmed', (ride) => {
+      setCurrentRide(ride);
+      toast({
+        title: "Ride Confirmed",
+        description: "A driver has accepted your ride request",
+      });
+      setStep(3); // Move to ride tracking step
+    });
+
+    newSocket.on('ride-status-changed', (data) => {
+      if (currentRide && currentRide._id === data.rideId) {
+        setCurrentRide(prev => ({ ...prev, status: data.status }));
+        if (data.status === 'ongoing') {
+          toast({
+            title: "Ride Started",
+            description: "Your ride has started",
+          });
+        } else if (data.status === 'completed') {
+          toast({
+            title: "Ride Completed",
+            description: "Your ride has been completed",
+          });
+          setCurrentRide(null);
+          setStep(1);
+        }
+      }
+    });
+
+    setSocket(newSocket);
+
+    return () => {
+      if (newSocket) {
+        newSocket.disconnect();
+      }
+    };
+  }, []);
 
   const vehicleTypes = {
     shuttle: {
@@ -201,33 +304,55 @@ export default function BookRide() {
   }, [pickupCoords, dropoffCoords])
 
   const handleConfirmBooking = async () => {
-    setBookingLoading(true)
+    setBookingLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/ride/create`, {
+      const res = await fetch(`${API_BASE}/rides/create`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify({
           pickup,
           destination: dropoff,
           vehicleType: selectedVehicle
         })
-      })
+      });
+
+      const data = await res.json();
+      
       if (res.ok) {
-        alert('Booking confirmed!')
+        setCurrentRide(data);
+        toast({
+          title: "Booking Confirmed",
+          description: "Waiting for a driver to accept your ride",
+        });
+        setStep(2); // Move to waiting for driver step
       } else {
-        alert('Booking failed!')
+        toast({
+          title: "Booking Failed",
+          description: data.message || "Failed to book ride",
+          variant: "destructive"
+        });
       }
-    } catch {
-      alert('Booking failed!')
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to book ride",
+        variant: "destructive"
+      });
     }
-    setBookingLoading(false)
-  }
+    setBookingLoading(false);
+  };
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2 rounded-xl border overflow-hidden" style={{ height: '600px' }}>
-        <LiveTracking pickupCoords={pickupCoords} dropoffCoords={dropoffCoords} />
+        <LiveTracking 
+          pickupCoords={pickupCoords} 
+          dropoffCoords={dropoffCoords}
+          currentRide={currentRide}
+        />
       </div>
 
       <div className="space-y-6">
@@ -319,74 +444,80 @@ export default function BookRide() {
           </div>
         )}
 
-        {step === 2 && (
+        {step === 2 && currentRide && (
           <div className="rounded-xl border bg-card p-6">
-            <h2 className="text-xl font-semibold mb-4">Select Vehicle</h2>
+            <h2 className="text-xl font-semibold mb-4">Waiting for Driver</h2>
             <div className="space-y-4">
-              {Object.entries(vehicleTypes).map(([key, vehicle]) => {
-                const VehicleIcon = vehicle.icon
-                return (
-                  <div 
-                    key={key}
-                    className={`flex items-center gap-4 p-4 rounded-lg border cursor-pointer hover:border-primary ${selectedVehicle === key ? 'border-primary bg-primary/5' : ''}`}
-                    onClick={() => {
-                      setSelectedVehicle(key)
-                      setStep(3)
-                    }}
-                  >
-                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                      <VehicleIcon className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold">{vehicle.name}</h3>
-                      <p className="text-sm text-muted-foreground">{vehicle.description}</p>
-                      <div className="flex gap-4 mt-1 text-xs text-muted-foreground">
-                        <span>{vehicle.capacity}</span>
-                        <span>{vehicle.waitTime}</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold">₹{fare[key]}</p>
-                      <p className="text-sm text-muted-foreground">Available now</p>
-                    </div>
-                  </div>
-                )
-              })}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Pickup</p>
+                  <p className="font-medium">{currentRide.pickup}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Destination</p>
+                  <p className="font-medium">{currentRide.destination}</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Vehicle Type</p>
+                  <p className="font-medium">{selectedVehicle}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Fare</p>
+                  <p className="font-medium">₹{currentRide.fare}</p>
+                </div>
+              </div>
+              <div className="pt-4">
+                <Button 
+                  className="w-full" 
+                  variant="outline"
+                  onClick={() => {
+                    setCurrentRide(null);
+                    setStep(1);
+                  }}
+                >
+                  Cancel Ride
+                </Button>
+              </div>
             </div>
           </div>
         )}
 
-        {step === 3 && selectedVehicle && (
+        {step === 3 && currentRide && (
           <div className="rounded-xl border bg-card p-6">
-            <h2 className="text-xl font-semibold mb-4">Confirm Booking</h2>
+            <h2 className="text-xl font-semibold mb-4">Ride in Progress</h2>
             <div className="space-y-4">
-              <div className="rounded-lg bg-muted p-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-sm">{pickup}</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Driver</p>
+                  <p className="font-medium">{currentRide.captain?.name || 'Loading...'}</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-sm">{dropoff}</p>
+                <div>
+                  <p className="text-sm text-muted-foreground">Vehicle</p>
+                  <p className="font-medium">{currentRide.captain?.vehicleDetails?.model || 'Loading...'}</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-sm">Estimated arrival: {vehicleTypes[selectedVehicle].waitTime}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  {selectedVehicle === 'shuttle' && <Bus className="h-4 w-4 text-muted-foreground" />}
-                  {selectedVehicle === 'cab' && <Car className="h-4 w-4 text-muted-foreground" />}
-                  {selectedVehicle === 'toto' && <Bike className="h-4 w-4 text-muted-foreground" />}
-                  <p className="text-sm">{vehicleTypes[selectedVehicle].name} • ₹{fare[selectedVehicle]}</p>
-                </div>
-                {distanceTime && (
-                  <div className="text-xs text-muted-foreground mt-2">Distance: {distanceTime.distance} | Time: {distanceTime.time}</div>
-                )}
               </div>
-
-              <Button className="w-full" onClick={handleConfirmBooking} disabled={bookingLoading}>
-                {bookingLoading ? 'Booking...' : 'Confirm Booking'}
-              </Button>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Pickup</p>
+                  <p className="font-medium">{currentRide.pickup}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Destination</p>
+                  <p className="font-medium">{currentRide.destination}</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Status</p>
+                  <p className="font-medium capitalize">{currentRide.status}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Fare</p>
+                  <p className="font-medium">₹{currentRide.fare}</p>
+                </div>
+              </div>
             </div>
           </div>
         )}
