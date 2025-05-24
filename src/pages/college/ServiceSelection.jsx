@@ -33,6 +33,13 @@ export default function ServiceSelection() {
       description: "Bike and vehicle rentals for students",
       price: 4999,
       icon: Bike
+    },
+    {
+      id: "Complementary",
+      name: "Complementary Marketing",
+      description: "Absolutely Free Marketing services for your college",
+      price: 0.00,
+      icon: Bus
     }
   ]
 
