@@ -103,11 +103,15 @@ module.exports.confirmRide = async ({
 
 }
 
-module.exports.startRide = async ({ rideId, otp, captain }) => {
+module.exports.startRide = async ({ rideId, otp }) => {
     if (!rideId || !otp) {
         throw new Error('Ride id and OTP are required');
     }
 
+    console.log('Starting ride with ID:', rideId);
+    console.log('OTP provided:', otp);
+
+    // First find the ride without any conditions
     const ride = await rideModel.findOne({
         _id: rideId
     }).populate('user').populate('captain').select('+otp');
@@ -116,21 +120,52 @@ module.exports.startRide = async ({ rideId, otp, captain }) => {
         throw new Error('Ride not found');
     }
 
-    if (ride.status !== 'accepted') {
-        throw new Error('Ride not accepted');
+    console.log('Found ride:', {
+        id: ride._id,
+        status: ride.status,
+        otp: ride.otp,
+        storedOtp: ride.otp
+    });
+
+    // Check if ride is already ongoing
+    if (ride.status === 'ongoing') {
+        throw new Error('Ride is already ongoing');
+    }
+
+    // Check if ride is in a valid state to start
+    if (ride.status !== 'accepted' && ride.status !== 'pending') {
+        console.log('Invalid ride status:', ride.status);
+        throw new Error(`Cannot start ride in ${ride.status} status`);
+    }
+
+    if (!ride.otp) {
+        console.log('No OTP found in ride data');
+        throw new Error('No OTP found for this ride');
     }
 
     if (ride.otp !== otp) {
+        console.log('OTP mismatch:', { provided: otp, stored: ride.otp });
         throw new Error('Invalid OTP');
     }
 
-    await rideModel.findOneAndUpdate({
-        _id: rideId
-    }, {
-        status: 'ongoing'
-    })
+    try {
+        // Update the ride status to ongoing
+        const updatedRide = await rideModel.findOneAndUpdate(
+            { _id: rideId },
+            { $set: { status: 'ongoing' } },
+            { new: true }
+        ).populate('user').populate('captain').select('+otp');
 
-    return ride;
+        if (!updatedRide) {
+            throw new Error('Failed to update ride status');
+        }
+
+        console.log('Updated ride status:', updatedRide.status);
+        return updatedRide;
+    } catch (error) {
+        console.error('Error updating ride status:', error);
+        throw new Error('Failed to update ride status');
+    }
 }
 
 module.exports.endRide = async ({ rideId, captain }) => {

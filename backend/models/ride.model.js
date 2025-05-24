@@ -8,7 +8,7 @@ const rideSchema = new mongoose.Schema({
         required: false // Changed from true to false to allow guest rides
     },
     captain: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: String,
         ref: 'captain',
     },
     pickup: {

@@ -26,18 +26,26 @@ router.post('/confirm',
 )
 
 router.get('/start-ride',
-    authMiddleware.authCaptain,
     query('rideId').isMongoId().withMessage('Invalid ride id'),
     query('otp').isString().isLength({ min: 6, max: 6 }).withMessage('Invalid OTP'),
     rideController.startRide
 )
 
 router.post('/end-ride',
-    authMiddleware.authCaptain,
     body('rideId').isMongoId().withMessage('Invalid ride id'),
+    body('driverId').isString().withMessage('Invalid driver ID'),
     rideController.endRide
 )
 
+router.post('/:rideId/accept',
+    body('driverId').isString().withMessage('Invalid driver ID'),
+    rideController.acceptRide
+);
 
+router.post('/:rideId/cancel',
+    rideController.cancelRide
+);
+
+router.get('/:rideId', rideController.getRideById);
 
 module.exports = router;

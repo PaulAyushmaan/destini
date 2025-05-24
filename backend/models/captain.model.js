@@ -3,6 +3,10 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
 const captainSchema = new mongoose.Schema({
+    _id: {
+        type: String,
+        required: true
+    },
     fullname: {
         firstname: {
             type: String,
@@ -16,49 +20,51 @@ const captainSchema = new mongoose.Schema({
     },
     email: {
         type: String,
-        required: true,
+        required: false,
         unique: true,
+        sparse: true,
         lowercase: true,
         match: [ /^\S+@\S+\.\S+$/, 'Please enter a valid email' ]
     },
     password: {
         type: String,
-        required: true,
+        required: false,
         select: false,
     },
     socketId: {
         type: String,
     },
-
+    isActive: {
+        type: Boolean,
+        default: true
+    },
     status: {
         type: String,
         enum: [ 'active', 'inactive' ],
-        default: 'inactive',
+        default: 'active',
     },
-
     vehicle: {
         color: {
             type: String,
-            required: true,
+            required: false,
             minlength: [ 3, 'Color must be at least 3 characters long' ],
         },
         plate: {
             type: String,
-            required: true,
+            required: false,
             minlength: [ 3, 'Plate must be at least 3 characters long' ],
         },
         capacity: {
             type: Number,
-            required: true,
+            required: false,
             min: [ 1, 'Capacity must be at least 1' ],
         },
         vehicleType: {
             type: String,
-            required: true,
+            required: false,
             enum: [ 'car', 'motorcycle', 'auto' ],
         }
     },
-
     location: {
         ltd: {
             type: Number,
@@ -67,25 +73,27 @@ const captainSchema = new mongoose.Schema({
             type: Number,
         }
     }
+}, { 
+    _id: false,
+    timestamps: true
 })
 
+// Ensure indexes are created
+captainSchema.index({ email: 1 }, { unique: true, sparse: true });
 
 captainSchema.methods.generateAuthToken = function () {
     const token = jwt.sign({ _id: this._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
     return token;
 }
 
-
 captainSchema.methods.comparePassword = async function (password) {
     return await bcrypt.compare(password, this.password);
 }
-
 
 captainSchema.statics.hashPassword = async function (password) {
     return await bcrypt.hash(password, 10);
 }
 
 const captainModel = mongoose.model('captain', captainSchema)
-
 
 module.exports = captainModel;

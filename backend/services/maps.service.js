@@ -93,16 +93,21 @@ module.exports.getAutoCompleteSuggestions = async (input) => {
 };
 
 /**
- * Get captains within a given radius
+ * Get all active captains
  */
 module.exports.getCaptainsInTheRadius = async (lat, lng, radius) => {
+    try {
+        console.log('Finding all active captains');
+        
+        // Find all active captains
     const captains = await captainModel.find({
-        location: {
-            $geoWithin: {
-                $centerSphere: [[lng, lat], radius / 6371] // Convert radius to radians
-            }
-        }
-    });
+            isActive: true
+        });
 
+        console.log(`Found ${captains.length} active captains`);
     return captains;
+    } catch (error) {
+        console.error('Error finding captains:', error);
+        throw error;
+    }
 };

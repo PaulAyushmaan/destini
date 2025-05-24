@@ -1,11 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
 import { ThemeProvider } from './components/theme-provider'
 import DashboardLayout from './components/DashboardLayout'
-// Change this line
-import SocketProvider from '../SocketContext' // Import the SocketProvider
-
-// To this
-import SocketProvider from '../SocketContext.jsx' // Fixed import with file extension
+import SocketProvider from '@/lib/SocketContext'
 
 // Public Pages
 import Home from './pages/Home'
@@ -26,12 +22,14 @@ import UserPayments from '@/pages/user/Payments'
 import UserSettings from '@/pages/user/Settings'
 import BookRide from '@/pages/user/BookRide'
 import AwaitingDriver from './pages/user/AwaitingDriver'
+import RideCompleted from './pages/user/RideCompleted'
 
 // Driver Portal Pages
 import DriverDashboard from '@/pages/driver/Dashboard'
 import DriverRides from '@/pages/driver/Rides'
 import DriverEarnings from '@/pages/driver/Earnings'
 import DriverSettings from '@/pages/driver/Settings'
+import RideDetails from './pages/driver/RideDetails'
 
 // Company Pages
 import About from "@/pages/company/About"
@@ -89,13 +87,15 @@ function App() {
             <Route path="/user/rides" element={<DashboardLayout portal="user"><UserRides /></DashboardLayout>} />
             <Route path="/user/payments" element={<DashboardLayout portal="user"><UserPayments /></DashboardLayout>} />
             <Route path="/user/settings" element={<DashboardLayout portal="user"><UserSettings /></DashboardLayout>} />
-            <Route path="/user/awaiting-driver" element={<AwaitingDriver />} />
+            <Route path="/user/awaiting-driver/:rideId" element={<AwaitingDriver />} />
+            <Route path="/user/ride-completed/:rideId" element={<RideCompleted />} />
 
             {/* Driver Portal Routes */}
             <Route path="/driver" element={<DashboardLayout portal="driver"><DriverDashboard /></DashboardLayout>} />
             <Route path="/driver/rides" element={<DashboardLayout portal="driver"><DriverRides /></DashboardLayout>} />
             <Route path="/driver/earnings" element={<DashboardLayout portal="driver"><DriverEarnings /></DashboardLayout>} />
             <Route path="/driver/settings" element={<DashboardLayout portal="driver"><DriverSettings /></DashboardLayout>} />
+            <Route path="/driver/ride/:rideId" element={<RideDetails />} />
 
             {/* Catch all route - redirect to home */}
             <Route path="*" element={<Navigate to="/" replace />} />

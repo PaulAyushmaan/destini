@@ -217,7 +217,7 @@ export default function BookRide() {
       })
       if (res.ok) {
         const ride = await res.json();
-        navigate('/user/awaiting-driver', { state: { ride, pickupCoords, dropoffCoords, distanceTime } });
+        navigate(`/user/awaiting-driver/${ride._id}`, { state: { ride, pickupCoords, dropoffCoords, distanceTime } });
       } else {
         alert('Booking failed!')
       }
