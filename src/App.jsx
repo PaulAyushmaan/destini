@@ -1,7 +1,9 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom"
 import { ThemeProvider } from './components/theme-provider'
 import DashboardLayout from './components/DashboardLayout'
 import SocketProvider from '@/lib/SocketContext'
+import PrivateRoute from './components/PrivateRoute'
+import PublicRoute from './components/PublicRoute'
 
 // Public Pages
 import Home from './pages/Home'
@@ -55,9 +57,11 @@ function App() {
         <Router>
           <Routes>
             {/* Public Routes */}
+            <Route element={<PublicRoute />}>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+            </Route>
             <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
 
             {/* Company Routes */}
             <Route path="/about" element={<About />} />
@@ -75,27 +79,33 @@ function App() {
             <Route path="/cookies" element={<Cookies />} />
 
             {/* College Portal Routes */}
-            <Route path="/college" element={<DashboardLayout portal="college"><CollegeDashboard /></DashboardLayout>} />
-            <Route path="/college/services" element={<DashboardLayout portal="college"><CollegeServices /></DashboardLayout>} />
-            <Route path="/college/students" element={<DashboardLayout portal="college"><StudentManagement /></DashboardLayout>} />
-            <Route path="/college/settings" element={<DashboardLayout portal="college"><CollegeSettings /></DashboardLayout>} />
-            <Route path="/college/select-services" element={<DashboardLayout portal="college"><ServiceSelection /></DashboardLayout>} />
+            <Route element={<PrivateRoute allowedRoles={['college']} />}>
+              <Route path="/college" element={<DashboardLayout portal="college"><CollegeDashboard /></DashboardLayout>} />
+              <Route path="/college/services" element={<DashboardLayout portal="college"><CollegeServices /></DashboardLayout>} />
+              <Route path="/college/students" element={<DashboardLayout portal="college"><StudentManagement /></DashboardLayout>} />
+              <Route path="/college/settings" element={<DashboardLayout portal="college"><CollegeSettings /></DashboardLayout>} />
+              <Route path="/college/select-services" element={<DashboardLayout portal="college"><ServiceSelection /></DashboardLayout>} />
+            </Route>
 
             {/* User Portal Routes */}
-            <Route path="/user" element={<DashboardLayout portal="user"><UserDashboard /></DashboardLayout>} />
-            <Route path="/user/book" element={<DashboardLayout portal="user"><BookRide /></DashboardLayout>} />
-            <Route path="/user/rides" element={<DashboardLayout portal="user"><UserRides /></DashboardLayout>} />
-            <Route path="/user/payments" element={<DashboardLayout portal="user"><UserPayments /></DashboardLayout>} />
-            <Route path="/user/settings" element={<DashboardLayout portal="user"><UserSettings /></DashboardLayout>} />
-            <Route path="/user/awaiting-driver/:rideId" element={<AwaitingDriver />} />
-            <Route path="/user/ride-completed/:rideId" element={<RideCompleted />} />
+            <Route element={<PrivateRoute allowedRoles={['student']} />}>
+              <Route path="/user" element={<DashboardLayout portal="user"><UserDashboard /></DashboardLayout>} />
+              <Route path="/user/book" element={<DashboardLayout portal="user"><BookRide /></DashboardLayout>} />
+              <Route path="/user/rides" element={<DashboardLayout portal="user"><UserRides /></DashboardLayout>} />
+              <Route path="/user/payments" element={<DashboardLayout portal="user"><UserPayments /></DashboardLayout>} />
+              <Route path="/user/settings" element={<DashboardLayout portal="user"><UserSettings /></DashboardLayout>} />
+              <Route path="/user/awaiting-driver/:rideId" element={<AwaitingDriver />} />
+              <Route path="/user/ride-completed/:rideId" element={<RideCompleted />} />
+            </Route>
 
             {/* Driver Portal Routes */}
-            <Route path="/driver" element={<DashboardLayout portal="driver"><DriverDashboard /></DashboardLayout>} />
-            <Route path="/driver/rides" element={<DashboardLayout portal="driver"><DriverRides /></DashboardLayout>} />
-            <Route path="/driver/earnings" element={<DashboardLayout portal="driver"><DriverEarnings /></DashboardLayout>} />
-            <Route path="/driver/settings" element={<DashboardLayout portal="driver"><DriverSettings /></DashboardLayout>} />
-            <Route path="/driver/ride/:rideId" element={<RideDetails />} />
+            <Route element={<PrivateRoute allowedRoles={['driver']} />}>
+              <Route path="/driver" element={<DashboardLayout portal="driver"><DriverDashboard /></DashboardLayout>} />
+              <Route path="/driver/rides" element={<DashboardLayout portal="driver"><DriverRides /></DashboardLayout>} />
+              <Route path="/driver/earnings" element={<DashboardLayout portal="driver"><DriverEarnings /></DashboardLayout>} />
+              <Route path="/driver/settings" element={<DashboardLayout portal="driver"><DriverSettings /></DashboardLayout>} />
+              <Route path="/driver/ride/:rideId" element={<RideDetails />} />
+            </Route>
 
             {/* Catch all route - redirect to home */}
             <Route path="*" element={<Navigate to="/" replace />} />

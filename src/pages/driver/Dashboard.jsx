@@ -4,6 +4,7 @@ import { SocketContext } from '../../lib/SocketContext';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Car, MapPin, Clock, User, Wallet, Navigation } from 'lucide-react';
+import LogoutButton from '@/components/LogoutButton';
 
 const API_BASE = 'http://localhost:4000';
 
@@ -206,6 +207,10 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header Actions */}
+        <div className="flex justify-end items-center mb-4">
+          <LogoutButton />
+        </div>
         {/* Driver Status */}
         <div className="bg-white rounded-xl shadow-sm p-6">
           <div className="flex items-center justify-between">

@@ -148,51 +148,268 @@ export default function BookRide() {
 
   const handleUseCurrentLocation = async () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
+      alert('Geolocation is not supported by your browser. Please use a modern browser.');
       return;
     }
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      const { latitude, longitude } = pos.coords;
-      // Use a reverse geocoding API (e.g., Nominatim OpenStreetMap)
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-        const data = await res.json();
-        const address = data.display_name || `${latitude},${longitude}`;
-        setPickup(address);
-        setPickupSuggestions([]);
-        setPickupCoords({ lat: latitude, lng: longitude });
-      } catch {
-        setPickup(`${latitude},${longitude}`);
-        setPickupSuggestions([]);
-        setPickupCoords({ lat: latitude, lng: longitude });
+
+    // Show loading state
+    setPickup('Getting your location...');
+    setPickupSuggestions([]);
+
+    try {
+      // First try with high accuracy
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          reject,
+          {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0
+          }
+        );
+      });
+
+      const { latitude, longitude } = position.coords;
+      
+      // Set coordinates immediately
+      setPickupCoords({ lat: latitude, lng: longitude });
+
+      // Try to get address with retry
+      let retryCount = 0;
+      const maxRetries = 2;
+
+      while (retryCount < maxRetries) {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+            {
+              headers: {
+                'Accept-Language': 'en-US,en;q=0.9',
+                'User-Agent': 'DestiniApp/1.0'
+              }
+            }
+          );
+          
+          if (!res.ok) throw new Error('Geocoding failed');
+          
+          const data = await res.json();
+          const address = data.display_name || `${latitude},${longitude}`;
+          setPickup(address);
+          break; // Success, exit loop
+        } catch (error) {
+          retryCount++;
+          if (retryCount === maxRetries) {
+            // If all retries failed, use coordinates
+            setPickup(`${latitude},${longitude}`);
+          } else {
+            // Wait before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
       }
-    }, () => {
-      alert('Unable to retrieve your location.');
-    });
+    } catch (error) {
+      console.error('Location error:', error);
+      
+      // Try again with lower accuracy if high accuracy fails
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            resolve,
+            reject,
+            {
+              enableHighAccuracy: false,
+              timeout: 10000,
+              maximumAge: 30000
+            }
+          );
+        });
+
+        const { latitude, longitude } = position.coords;
+        setPickupCoords({ lat: latitude, lng: longitude });
+        setPickup(`${latitude},${longitude}`);
+      } catch (fallbackError) {
+        console.error('Fallback location error:', fallbackError);
+        
+        // Show specific error message based on error code
+        switch (fallbackError.code) {
+          case fallbackError.PERMISSION_DENIED:
+            alert('Location access denied. Please enable location services in your browser settings.');
+            break;
+          case fallbackError.POSITION_UNAVAILABLE:
+            alert('Location information is unavailable. Please check your device\'s location settings.');
+            break;
+          case fallbackError.TIMEOUT:
+            alert('Location request timed out. Please try again.');
+            break;
+          default:
+            alert('Unable to get your location. Please check your location settings and try again.');
+        }
+        
+        setPickup('');
+        setPickupCoords(null);
+      }
+    }
   };
 
   const handleUseCurrentDropoffLocation = async () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
+      alert('Geolocation is not supported by your browser. Please use a modern browser.');
       return;
     }
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      const { latitude, longitude } = pos.coords;
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-        const data = await res.json();
-        const address = data.display_name || `${latitude},${longitude}`;
-        setDropoff(address);
-        setDropoffSuggestions([]);
-        setDropoffCoords({ lat: latitude, lng: longitude });
-      } catch {
-        setDropoff(`${latitude},${longitude}`);
-        setDropoffSuggestions([]);
-        setDropoffCoords({ lat: latitude, lng: longitude });
+
+    // Show loading state
+    setDropoff('Getting your location...');
+    setDropoffSuggestions([]);
+
+    try {
+      // First try with high accuracy
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          reject,
+          {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0
+          }
+        );
+      });
+
+      const { latitude, longitude } = position.coords;
+      
+      // Set coordinates immediately
+      setDropoffCoords({ lat: latitude, lng: longitude });
+
+      // Try to get address with retry
+      let retryCount = 0;
+      const maxRetries = 2;
+      let addressFound = false;
+
+      while (retryCount < maxRetries && !addressFound) {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+            {
+              headers: {
+                'Accept-Language': 'en-US,en;q=0.9',
+                'User-Agent': 'DestiniApp/1.0'
+              }
+            }
+          );
+          
+          if (!res.ok) throw new Error('Geocoding failed');
+          
+          const data = await res.json();
+          if (data.display_name) {
+            setDropoff(data.display_name);
+            addressFound = true;
+          } else {
+            throw new Error('No address found');
+          }
+        } catch (error) {
+          retryCount++;
+          if (retryCount === maxRetries) {
+            // If all retries failed, try one more time with a different zoom level
+            try {
+              const res = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=14&addressdetails=1`,
+                {
+                  headers: {
+                    'Accept-Language': 'en-US,en;q=0.9',
+                    'User-Agent': 'DestiniApp/1.0'
+                  }
+                }
+              );
+              
+              if (res.ok) {
+                const data = await res.json();
+                if (data.display_name) {
+                  setDropoff(data.display_name);
+                  addressFound = true;
+                }
+              }
+            } catch (finalError) {
+              console.error('Final geocoding attempt failed:', finalError);
+            }
+            
+            if (!addressFound) {
+              // If still no address, use a formatted coordinate string
+              setDropoff(`Location at ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+            }
+          } else {
+            // Wait before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
       }
-    }, () => {
-      alert('Unable to retrieve your location.');
-    });
+    } catch (error) {
+      console.error('Location error:', error);
+      
+      // Try again with lower accuracy if high accuracy fails
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            resolve,
+            reject,
+            {
+              enableHighAccuracy: false,
+              timeout: 10000,
+              maximumAge: 30000
+            }
+          );
+        });
+
+        const { latitude, longitude } = position.coords;
+        setDropoffCoords({ lat: latitude, lng: longitude });
+        
+        // Try to get address one last time
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=14&addressdetails=1`,
+            {
+              headers: {
+                'Accept-Language': 'en-US,en;q=0.9',
+                'User-Agent': 'DestiniApp/1.0'
+              }
+            }
+          );
+          
+          if (res.ok) {
+            const data = await res.json();
+            if (data.display_name) {
+              setDropoff(data.display_name);
+            } else {
+              setDropoff(`Location at ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+            }
+          } else {
+            setDropoff(`Location at ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+          }
+        } catch (geocodeError) {
+          setDropoff(`Location at ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+        }
+      } catch (fallbackError) {
+        console.error('Fallback location error:', fallbackError);
+        
+        // Show specific error message based on error code
+        switch (fallbackError.code) {
+          case fallbackError.PERMISSION_DENIED:
+            alert('Location access denied. Please enable location services in your browser settings.');
+            break;
+          case fallbackError.POSITION_UNAVAILABLE:
+            alert('Location information is unavailable. Please check your device\'s location settings.');
+            break;
+          case fallbackError.TIMEOUT:
+            alert('Location request timed out. Please try again.');
+            break;
+          default:
+            alert('Unable to get your location. Please check your location settings and try again.');
+        }
+        
+        setDropoff('');
+        setDropoffCoords(null);
+      }
+    }
   };
 
   React.useEffect(() => {

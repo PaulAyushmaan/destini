@@ -2,6 +2,7 @@ const userModel = require('../models/user.model');
 const userService = require('../services/user.service');
 const { validationResult } = require('express-validator');
 const blackListTokenModel = require('../models/blacklistToken.model');
+const bcrypt = require('bcryptjs');
 
 module.exports.registerUser = async (req, res, next) => {
 
@@ -35,6 +36,7 @@ module.exports.registerUser = async (req, res, next) => {
 }
 
 module.exports.loginUser = async (req, res, next) => {
+    console.log(req.body);
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -49,7 +51,10 @@ module.exports.loginUser = async (req, res, next) => {
         return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    const isMatch = await user.comparePassword(password);
+    console.log(user.password);
+    console.log(password);
+
+    const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
         return res.status(401).json({ message: 'Invalid email or password' });

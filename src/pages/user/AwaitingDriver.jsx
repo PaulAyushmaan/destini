@@ -475,8 +475,8 @@ export default function AwaitingDriver() {
               </div>
             )}
 
-            {/* Show Cancel Ride button only when status is not ongoing, completed, or cancelled */}
-            {ride?.status !== 'ongoing' && ride?.status !== 'completed' && ride?.status !== 'cancelled' && (
+            {/* Show Cancel Ride button only when status is not ongoing, completed, cancelled, or accepted */}
+            {ride?.status !== 'ongoing' && ride?.status !== 'completed' && ride?.status !== 'cancelled' && ride?.status !== 'accepted' && (
               <Button
                 onClick={handleCancelClick}
                 className="w-full bg-red-500 hover:bg-red-600"

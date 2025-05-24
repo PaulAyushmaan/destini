@@ -1,7 +1,9 @@
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { Car, School, GraduationCap, Bike, Home } from "lucide-react"
 import { Button } from "@/components/ui/button"
+
+const API_BASE = 'http://localhost:4000';
 
 export default function Register() {
   const [selectedRole, setSelectedRole] = useState(null)
@@ -16,10 +18,11 @@ export default function Register() {
     studentId: "",
     licenseNumber: "",
   })
+  const navigate = useNavigate();
 
   const roles = [
     {
-      id: "school",
+      id: "college",
       title: "School/College",
       icon: School,
       description: "Register your institution to provide transportation services",
@@ -56,11 +59,62 @@ export default function Register() {
     }))
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // Handle form submission based on role
-    console.log('Form submitted:', { role: selectedRole, ...formData })
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          phone: formData.phone,
+          role: selectedRole,
+          ...(selectedRole === 'student' && { studentId: formData.studentId }),
+          ...(selectedRole === 'college' && { institutionName: formData.institutionName }),
+          ...(selectedRole === 'driver' && { licenseNumber: formData.licenseNumber })
+        }),
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
+      }
+
+      // Store token and user data
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
+      // Redirect based on role
+      switch (data.user.role) {
+        case 'student':
+          navigate('/user');
+          break;
+        case 'college':
+          navigate('/college');
+          break;
+        case 'driver':
+          navigate('/driver');
+          break;
+        default:
+          navigate('/');
+      }
+    } catch (error) {
+      alert(error.message);
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -186,7 +240,7 @@ export default function Register() {
                   </div>
 
                   {/* Role-specific fields */}
-                  {selectedRole === "school" && (
+                  {selectedRole === "college" && (
                     <div className="space-y-2">
                       <label className="text-sm font-medium leading-none">Institution Name</label>
                       <input

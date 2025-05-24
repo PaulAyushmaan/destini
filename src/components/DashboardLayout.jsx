@@ -126,6 +126,20 @@ export default function DashboardLayout({ portal = "user", children }) {
   const location = useLocation()
   const config = portalConfig[portal]
   
+  // Get user info from localStorage
+  let user = null;
+  try {
+    user = JSON.parse(localStorage.getItem('user'));
+  } catch {}
+  const name = user?.name || user?.fullname?.firstname || 'User';
+  const email = user?.email || '';
+  const initials = name
+    .split(' ')
+    .map(word => word[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
   // For testing: Set to true to simulate paid state
   const isPaid = true
   const isCollegeUnpaid = portal === "college" && !isPaid && location.pathname !== "/college/select-services"
@@ -175,11 +189,11 @@ export default function DashboardLayout({ portal = "user", children }) {
         <div className="border-t p-6">
           <button className="flex w-full items-center gap-4 rounded-lg p-3 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-              <span className="font-medium">JD</span>
+              <span className="font-medium">{initials}</span>
             </div>
             <div className="flex-1 text-left">
-              <div className="font-medium text-foreground">John Doe</div>
-              <div className="text-sm">john.doe@example.com</div>
+              <div className="font-medium text-foreground">{name}</div>
+              <div className="text-sm">{email}</div>
             </div>
           </button>
         </div>
@@ -199,7 +213,7 @@ export default function DashboardLayout({ portal = "user", children }) {
                 <Bell className="h-6 w-6" />
               </button>
               <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium">
-                JD
+                {initials}
               </div>
             </div>
           </div>
