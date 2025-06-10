@@ -13,12 +13,7 @@ const rideRoutes = require('./routes/ride.routes');
 connectToDb();
 
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1:5174'
-  ],
+  origin: 'https://0f87-2409-40e0-1bf-6f7f-745b-b7-383-3b6.ngrok-free.app',
   credentials: true
 }));
 app.use(express.json());

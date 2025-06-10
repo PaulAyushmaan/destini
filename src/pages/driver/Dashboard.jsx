@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Car, MapPin, Clock, User, Wallet, Navigation } from 'lucide-react';
 
-const API_BASE = 'http://localhost:4000';
+const API_BASE = import.meta.env.VITE_BASE_URL;
 
 export default function Dashboard() {
   const { socket } = useContext(SocketContext);

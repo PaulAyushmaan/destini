@@ -127,7 +127,7 @@ export default function DashboardLayout({ portal = "user", children }) {
   const config = portalConfig[portal]
   
   // For testing: Set to true to simulate paid state
-  const isPaid = true
+  const isPaid = false
   const isCollegeUnpaid = portal === "college" && !isPaid && location.pathname !== "/college/select-services"
 
   const navigationItems = isCollegeUnpaid 

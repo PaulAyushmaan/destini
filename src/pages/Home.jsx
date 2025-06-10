@@ -133,13 +133,11 @@ export default function Home() {
             <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
               <div className="flex flex-col justify-center space-y-8">
                 <div className="space-y-6">
-                  <h1 className="hero-heading">
-                    Transportation
-                    <br />
-                    Reimagined for
-                    <br />
-                    Education
-                  </h1>
+                  <div className="hero-heading flex flex-col items-start space-y-8">
+                    <div>Transportation</div>
+                    <div>Reimagined for</div>
+                    <div>Education</div>
+                  </div>
                   <p className="max-w-[600px] text-lg text-muted-foreground md:text-xl">
                     Destini connects schools, students, and drivers in one seamless platform. Experience affordable rides, efficient campus solutions, and a better way to commute.
                   </p>
