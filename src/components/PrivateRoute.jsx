@@ -3,11 +3,23 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 const getUser = () => {
   try {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (user && user.token) {
-      localStorage.setItem('token', user.token);
+    // Check for driver data first
+    const driverData = localStorage.getItem('driverData');
+    if (driverData) {
+      const driver = JSON.parse(driverData);
+      return {
+        ...driver,
+        role: 'driver' // Ensure role is set for drivers
+      };
     }
-    return user;
+
+    // Check for regular user data
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      return JSON.parse(userData);
+    }
+
+    return null;
   } catch {
     return null;
   }
@@ -22,15 +34,19 @@ const PrivateRoute = ({ allowedRoles }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
+  // For drivers, we only check if they're trying to access driver routes
+  if (user.role === 'driver' && !allowedRoles.includes('driver')) {
+    return <Navigate to="/driver" replace />;
+  }
+
+  // For other users, check if their role is allowed
+  if (user.role !== 'driver' && allowedRoles && !allowedRoles.includes(user.role)) {
     // Logged in but wrong portal, redirect to correct dashboard
     switch (user.role) {
       case 'student':
         return <Navigate to="/user" replace />;
       case 'college':
         return <Navigate to="/college" replace />;
-      case 'driver':
-        return <Navigate to="/driver" replace />;
       default:
         return <Navigate to="/" replace />;
     }

@@ -38,10 +38,20 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: function() { return this.role === 'driver'; }
     },
+    // Payment and services fields for colleges
+    isPaid: {
+        type: Boolean,
+        default: false
+    },
+    services: {
+        type: [String],
+        enum: ['cab', 'shuttle', 'rental'],
+        default: []
+    },
     // Additional fields
     isVerified: {
         type: Boolean,
-        default: false
+        default: true,
     },
     createdAt: {
         type: Date,

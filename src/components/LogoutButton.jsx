@@ -21,6 +21,7 @@ const LogoutButton = () => {
       // Clear local storage
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      localStorage.removeItem('driverData');
 
       // Redirect to login page
       console.log('Logging out');

@@ -4,10 +4,16 @@ import { io } from 'socket.io-client';
 export const SocketContext = createContext();
 
 // Add better logging for the connection URL
-const socketUrl = import.meta.env.VITE_BASE_URL || 'http://localhost:5000';
+const socketUrl = import.meta.env.VITE_BASE_URL || 'http://localhost:4000';
 console.log('Connecting to socket server at:', socketUrl);
 
-const socket = io(socketUrl);
+const socket = io(socketUrl, {
+  withCredentials: true,
+  autoConnect: true,
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000
+});
 
 const SocketProvider = ({ children }) => {
     const [newRide, setNewRide] = useState(null);

@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Car, Home } from "lucide-react"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 const API_BASE = 'http://localhost:4000';
 
 function Login() {
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
+    role: 'user' // Default role
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,14 +32,24 @@ function Login() {
     setLoading(true);
 
     try {
+      let endpoint = `${API_BASE}/auth/login`;
+      let response;
+
+      // If logging in as a driver, use the captains endpoint
+      if (formData.role === 'driver') {
+        endpoint = `${API_BASE}/captains/login`;
+      }
+
       console.log('Sending login request with data:', formData);
-      const response = await fetch(`${API_BASE}/auth/login`, {
+      response = await fetch(endpoint, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        }),
         credentials: 'include'
       });
 
@@ -48,30 +60,34 @@ function Login() {
         throw new Error(data.message || 'Login failed');
       }
 
-      // Store token and user data
+      // Store token
       localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
 
-      // Debug: Log the role and intended navigation
-      console.log('User role:', data.user.role);
-
-      // Redirect based on role
-      switch (data.user.role) {
-        case 'student':
-          console.log('Navigating to /user/dashboard');
-          navigate('/user');
-          break;
-        case 'college':
-          console.log('Navigating to /college/dashboard');
-          navigate('/college');
-          break;
-        case 'driver':
-          console.log('Navigating to /driver/dashboard');
-          navigate('/driver');
-          break;
-        default:
-          console.log('Navigating to /');
-          navigate('/');
+      // Handle driver vs user data storage
+      if (formData.role === 'driver') {
+        if (!data.captain) {
+          throw new Error('No driver data received');
+        }
+        localStorage.setItem('driverId', data.captain._id);
+        localStorage.setItem('driverData', JSON.stringify(data.captain));
+        
+        // Add a small delay to ensure data is stored before navigation
+        await new Promise(resolve => setTimeout(resolve, 100));
+        navigate('/driver');
+        return;
+      } else {
+        localStorage.setItem('user', JSON.stringify(data.user));
+        // Redirect based on role
+        switch (data.user.role) {
+          case 'student':
+            navigate('/user');
+            break;
+          case 'college':
+            navigate('/college');
+            break;
+          default:
+            navigate('/');
+        }
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -82,19 +98,22 @@ function Login() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center justify-between">
           <Link to="/" className="flex items-center gap-2 font-bold">
             <Car className="h-6 w-6" />
             <span>Destini</span>
           </Link>
-          <Link to="/">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <Home className="h-4 w-4" />
-              Back to Home
-            </Button>
-          </Link>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <Link to="/">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <Home className="h-4 w-4" />
+                Back to Home
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -108,10 +127,24 @@ function Login() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
+                <div className="p-3 text-sm text-red-500 bg-red-50 dark:bg-red-950 rounded-md">
                   {error}
                 </div>
               )}
+
+              <div className="space-y-2">
+                <Label htmlFor="role">Login As</Label>
+                <select
+                  id="role"
+                  name="role"
+                  value={formData.role}
+                  onChange={handleInputChange}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="user">User</option>
+                  <option value="driver">Driver</option>
+                </select>
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -144,7 +177,7 @@ function Login() {
               </Button>
             </form>
 
-            <div className="text-center text-sm">
+            <div className="text-center text-sm text-muted-foreground">
               Don't have an account?{' '}
               <Link to="/register" className="font-medium text-primary hover:underline">
                 Register

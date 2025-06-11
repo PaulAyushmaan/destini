@@ -119,24 +119,42 @@ function getOtp(num) {
 
 
 module.exports.createRide = async ({ user, pickup, destination, vehicleType }) => {
-    if (!pickup || !destination || !vehicleType) {
-        throw new Error('All fields are required');
+    try {
+        // Get distance and duration
+        const { distance, duration } = await mapService.getDistanceTime(pickup, destination);
+        
+        // Calculate fare
+        const fare = await this.getFare(pickup, destination);
+        
+        // Generate 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // Create the ride
+        const ride = await rideModel.create({
+            user,
+            pickup,
+            destination,
+            vehicleType,
+            fare: fare[vehicleType],
+            otp,
+            distance,
+            duration
+        });
+
+        console.log('Created ride:', {
+            id: ride._id,
+            pickup,
+            destination,
+            vehicleType,
+            fare: fare[vehicleType]
+        });
+
+        return ride;
+    } catch (error) {
+        console.error('Error in createRide service:', error);
+        throw error;
     }
-
-    const fare = await getFare(pickup, destination);
-
-
-
-    const ride = await rideModel.create({
-        ...(user ? { user } : {}),
-        pickup,
-        destination,
-        otp: getOtp(6),
-        fare: fare[vehicleType]
-    });
-
-    return ride;
-}
+};
 
 module.exports.confirmRide = async ({
     rideId, captain

@@ -4,6 +4,8 @@ const { body } = require("express-validator")
 const userController = require('../controllers/user.controller');
 const authMiddleware = require('../middlewares/auth.middleware');
 
+// Get all students (protected route for college admin)
+router.get('/students', authMiddleware.authUser, userController.getAllStudents);
 
 router.post('/register', [
     body('email').isEmail().withMessage('Invalid Email'),
@@ -23,7 +25,5 @@ router.post('/login', [
 router.get('/profile', authMiddleware.authUser, userController.getUserProfile)
 
 router.get('/logout', authMiddleware.authUser, userController.logoutUser)
-
-
 
 module.exports = router;

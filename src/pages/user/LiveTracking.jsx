@@ -85,7 +85,7 @@ function LocationMarker() {
       const accuracyInMeters = accuracy > 1000 ? accuracy / 1000 : accuracy;
       
       // Accept positions with accuracy up to 500 meters
-      if (accuracyInMeters <= 500) {
+      if (accuracyInMeters <= 1000) {
         setPosition(newPosition);
         setAccuracy(accuracyInMeters);
         

@@ -3,6 +3,34 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
+const { authUser } = require('../middlewares/auth.middleware');
+
+// Get current user
+router.get('/me', authUser, async (req, res) => {
+    try {
+        // req.user is already set by authUser middleware
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        
+        res.json({
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            studentId: user.studentId,
+            institutionName: user.institutionName,
+            licenseNumber: user.licenseNumber,
+            phone: user.phone,
+            isPaid: user.isPaid,
+            services: user.services
+        });
+    } catch (error) {
+        console.error('Error fetching user data:', error);
+        res.status(500).json({ message: 'Error fetching user data' });
+    }
+});
 
 // Register route
 router.post('/register', async (req, res) => {
@@ -56,13 +84,17 @@ router.post('/register', async (req, res) => {
 
         res.status(201).json({
             message: 'Registration successful',
+            token,
             user: {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                isPaid: user.isPaid,
+                services: user.services
             }
         });
+        console.log("Registration response sent with token:", { userId: user._id, token });
     } catch (error) {
         console.error('Registration error:', error);
         res.status(500).json({ message: error.message || 'Error registering user' });
@@ -110,10 +142,18 @@ router.post('/login', async (req, res) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                studentId: user.studentId,
+                institutionName: user.institutionName,
+                licenseNumber: user.licenseNumber,
+                phone: user.phone,
+                isPaid: user.isPaid,
+                services: user.services
             }
         };
 
+        console.log("responseData",responseData)
+        console.log("user",user)
         console.log('Sending successful login response for user:', user._id);
         res.json(responseData);
     } catch (error) {

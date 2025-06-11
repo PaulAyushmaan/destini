@@ -30,5 +30,13 @@ router.get('/profile', authMiddleware.authCaptain, captainController.getCaptainP
 
 router.get('/logout', authMiddleware.authCaptain, captainController.logoutCaptain)
 
+// New routes for status management
+router.post('/status', [
+    authMiddleware.authCaptain,
+    body('status').optional().isIn(['available', 'busy', 'offline']).withMessage('Invalid status'),
+    body('socketId').optional().isString().withMessage('Invalid socket ID')
+], captainController.updateCaptainStatus)
+
+router.post('/toggle-availability', authMiddleware.authCaptain, captainController.toggleAvailability)
 
 module.exports = router;

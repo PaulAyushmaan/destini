@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button"
-import { Car, Users, MapPin, Wallet, ArrowUp, ArrowDown, Bus, Bike } from "lucide-react"
+import { Car, Users, MapPin, Wallet, ArrowUp, ArrowDown, Bus, Bike, ArrowRight } from "lucide-react"
 import LogoutButton from '@/components/LogoutButton'
+import { useNavigate } from 'react-router-dom'
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+
   return (
     <div className="grid gap-6">
       {/* Header Actions */}
@@ -53,89 +56,157 @@ export default function Dashboard() {
       {/* Service Overview */}
       <div className="grid gap-6 md:grid-cols-3">
         {/* Campus Shuttle */}
-        <div className="rounded-xl border bg-card">
-          <div className="border-b p-6">
+        <div className="rounded-xl border bg-card hover-card">
+          <div className="border-b p-6 bg-primary/5">
             <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                <Bus className="h-5 w-5 text-primary" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                <Bus className="h-6 w-6 text-primary" />
               </div>
-              <h4 className="text-xl font-semibold">Campus Shuttle</h4>
+              <div>
+                <h4 className="text-xl font-semibold">Campus Shuttle</h4>
+                <p className="text-sm text-muted-foreground">Real-time tracking</p>
+              </div>
             </div>
           </div>
           <div className="p-6">
             <div className="space-y-4">
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Active Routes</span>
-                <span className="font-medium">8</span>
+              <div className="flex justify-between items-center p-3 rounded-lg bg-secondary/50">
+                <span className="text-sm font-medium">Active Routes</span>
+                <span className="font-semibold text-primary">8</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">On-duty Drivers</span>
-                <span className="font-medium">12</span>
+              <div className="flex justify-between items-center p-3 rounded-lg bg-secondary/50">
+                <span className="text-sm font-medium">On-duty Drivers</span>
+                <span className="font-semibold text-primary">12</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Today's Rides</span>
-                <span className="font-medium">145</span>
+              <div className="flex justify-between items-center p-3 rounded-lg bg-secondary/50">
+                <span className="text-sm font-medium">Today's Rides</span>
+                <span className="font-semibold text-primary">145</span>
               </div>
             </div>
-            <Button variant="outline" className="w-full mt-6">View Details</Button>
+            <Button 
+              variant="default" 
+              className="w-full mt-6 gap-2"
+              onClick={() => navigate('/college/services/shuttle')}
+            >
+              View Details
+              <ArrowRight className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
         {/* Cab Service */}
-        <div className="rounded-xl border bg-card">
-          <div className="border-b p-6">
+        <div className="rounded-xl border bg-card hover-card">
+          <div className="border-b p-6 bg-primary/5">
             <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                <Car className="h-5 w-5 text-primary" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                <Car className="h-6 w-6 text-primary" />
               </div>
-              <h4 className="text-xl font-semibold">Cab Service</h4>
+              <div>
+                <h4 className="text-xl font-semibold">Cab Service</h4>
+                <p className="text-sm text-muted-foreground">On-demand rides</p>
+              </div>
             </div>
           </div>
           <div className="p-6">
             <div className="space-y-4">
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Available Cars</span>
-                <span className="font-medium">25</span>
+              <div className="flex justify-between items-center p-3 rounded-lg bg-secondary/50">
+                <span className="text-sm font-medium">Available Cars</span>
+                <span className="font-semibold text-primary">25</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Active Drivers</span>
-                <span className="font-medium">18</span>
+              <div className="flex justify-between items-center p-3 rounded-lg bg-secondary/50">
+                <span className="text-sm font-medium">Active Drivers</span>
+                <span className="font-semibold text-primary">18</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Today's Rides</span>
-                <span className="font-medium">89</span>
+              <div className="flex justify-between items-center p-3 rounded-lg bg-secondary/50">
+                <span className="text-sm font-medium">Today's Rides</span>
+                <span className="font-semibold text-primary">89</span>
               </div>
             </div>
-            <Button variant="outline" className="w-full mt-6">View Details</Button>
+            <Button 
+              variant="default" 
+              className="w-full mt-6 gap-2"
+              onClick={() => navigate('/college/services/cab')}
+            >
+              View Details
+              <ArrowRight className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
         {/* Bike Rentals */}
-        <div className="rounded-xl border bg-card">
-          <div className="border-b p-6">
+        <div className="rounded-xl border bg-card hover-card">
+          <div className="border-b p-6 bg-primary/5">
             <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                <Bike className="h-5 w-5 text-primary" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                <Bike className="h-6 w-6 text-primary" />
               </div>
-              <h4 className="text-xl font-semibold">Bike Rentals</h4>
+              <div>
+                <h4 className="text-xl font-semibold">Bike Rentals</h4>
+                <p className="text-sm text-muted-foreground">Easy rentals</p>
+              </div>
             </div>
           </div>
           <div className="p-6">
             <div className="space-y-4">
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Total Bikes</span>
-                <span className="font-medium">120</span>
+              <div className="flex justify-between items-center p-3 rounded-lg bg-secondary/50">
+                <span className="text-sm font-medium">Total Bikes</span>
+                <span className="font-semibold text-primary">120</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Available Now</span>
-                <span className="font-medium">85</span>
+              <div className="flex justify-between items-center p-3 rounded-lg bg-secondary/50">
+                <span className="text-sm font-medium">Available Now</span>
+                <span className="font-semibold text-primary">85</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Today's Rentals</span>
-                <span className="font-medium">34</span>
+              <div className="flex justify-between items-center p-3 rounded-lg bg-secondary/50">
+                <span className="text-sm font-medium">Today's Rentals</span>
+                <span className="font-semibold text-primary">34</span>
               </div>
             </div>
-            <Button variant="outline" className="w-full mt-6">View Details</Button>
+            <Button 
+              variant="default" 
+              className="w-full mt-6 gap-2"
+              onClick={() => navigate('/college/services/bike')}
+            >
+              View Details
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+                {/* Complimentary Marketing Insights */}
+                <div className="rounded-xl border bg-card hover-card">
+          <div className="border-b p-6 bg-primary/5">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                <Bike className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h4 className="text-xl font-semibold">Complimentary Marketing Insights</h4>
+                <p className="text-sm text-muted-foreground">Get insights on your marketing efforts</p>
+              </div>
+            </div>
+          </div>
+          <div className="p-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center p-3 rounded-lg bg-secondary/50">
+                <span className="text-sm font-medium">Total Insights</span>
+                <span className="font-semibold text-primary">10</span>
+              </div>
+              <div className="flex justify-between items-center p-3 rounded-lg bg-secondary/50">
+                <span className="text-sm font-medium">High Performing Campaigns</span>
+                <span className="font-semibold text-primary">5</span>
+              </div>
+              <div className="flex justify-between items-center p-3 rounded-lg bg-secondary/50">
+                <span className="text-sm font-medium">New Students</span>
+                <span className="font-semibold text-primary">34</span>
+              </div>
+            </div>
+            <Button 
+              variant="default" 
+              className="w-full mt-6 gap-2"
+              onClick={() => navigate('/college/marketing-insights')}
+            >
+              View Details
+              <ArrowRight className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>

@@ -65,6 +65,7 @@ module.exports.loginUser = async (req, res, next) => {
     res.cookie('token', token);
 
     res.status(200).json({ token, user });
+    console.log("user",user)
 }
 
 module.exports.getUserProfile = async (req, res, next) => {
@@ -82,3 +83,24 @@ module.exports.logoutUser = async (req, res, next) => {
     res.status(200).json({ message: 'Logged out' });
 
 }
+
+// Get all students
+exports.getAllStudents = async (req, res) => {
+    try {
+        const students = await userModel.find(
+            { role: 'student' },
+            { password: 0 } // Exclude password field
+        ).sort({ createdAt: -1 }); // Sort by newest first
+
+        res.status(200).json({
+            success: true,
+            students
+        });
+    } catch (error) {
+        console.error('Error fetching students:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch students'
+        });
+    }
+};

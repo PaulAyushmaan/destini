@@ -38,7 +38,7 @@ export default function BookRide() {
       description: "Shared • AC • Most economical",
       capacity: "20+ seats",
       waitTime: "~10-15 mins",
-      type: "shuttle"
+      type: "auto"
     },
     car: {
       name: "Private Cab",
@@ -48,7 +48,7 @@ export default function BookRide() {
       description: "4 seats • AC • Best for groups",
       capacity: "4 seats",
       waitTime: "~5 mins",
-      type: "cab"
+      type: "car"
     },
     moto: {
       name: "Electric Toto",
@@ -58,7 +58,7 @@ export default function BookRide() {
       description: "3 seats • Eco-friendly",
       capacity: "3 seats",
       waitTime: "~3-5 mins",
-      type: "toto"
+      type: "moto"
     }
   }
 
@@ -422,24 +422,33 @@ export default function BookRide() {
   const handleConfirmBooking = async () => {
     setBookingLoading(true)
     try {
+      // Get token from localStorage if it exists
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      };
+
       const res = await fetch(`${API_BASE}/rides/create`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         credentials: 'include',
         body: JSON.stringify({
           pickup,
           destination: dropoff,
-          vehicleType: selectedVehicle
+          vehicleType: vehicleTypes[selectedVehicle].type
         })
       })
       if (res.ok) {
         const ride = await res.json();
         navigate(`/user/awaiting-driver/${ride._id}`, { state: { ride, pickupCoords, dropoffCoords, distanceTime } });
       } else {
-        alert('Booking failed!')
+        const errorData = await res.json();
+        alert(errorData.message || 'Booking failed!');
       }
-    } catch {
-      alert('Booking failed!')
+    } catch (error) {
+      console.error('Booking error:', error);
+      alert('Booking failed!');
     }
     setBookingLoading(false)
   }
@@ -594,9 +603,9 @@ export default function BookRide() {
                   <p className="text-sm">Estimated arrival: {vehicleTypes[selectedVehicle].waitTime}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  {selectedVehicle === 'shuttle' && <Bus className="h-4 w-4 text-muted-foreground" />}
-                  {selectedVehicle === 'cab' && <Car className="h-4 w-4 text-muted-foreground" />}
-                  {selectedVehicle === 'toto' && <Bike className="h-4 w-4 text-muted-foreground" />}
+                  {selectedVehicle === 'auto' && <Bus className="h-4 w-4 text-muted-foreground" />}
+                  {selectedVehicle === 'car' && <Car className="h-4 w-4 text-muted-foreground" />}
+                  {selectedVehicle === 'moto' && <Bike className="h-4 w-4 text-muted-foreground" />}
                   <p className="text-sm">{vehicleTypes[selectedVehicle].name} • ₹{fare[selectedVehicle]}</p>
                 </div>
                 {distanceTime && (

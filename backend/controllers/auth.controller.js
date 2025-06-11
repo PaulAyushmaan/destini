@@ -44,6 +44,13 @@ exports.register = async (req, res) => {
             { expiresIn: '7d' }
         );
 
+        // Set token in cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+
         res.status(201).json({
             message: 'Registration successful',
             token,
@@ -51,9 +58,13 @@ exports.register = async (req, res) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                isPaid: user.isPaid,
+                services: user.services
             }
         });
+        console.log("Registration successful - user:", user)
+        console.log("Registration token:", token)
     } catch (error) {
         console.error('Registration error:', error);
         res.status(500).json({ message: 'Registration failed', error: error.message });
@@ -93,7 +104,9 @@ exports.login = async (req, res) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                isPaid: user.isPaid,
+                services: user.services
             }
         });
     } catch (error) {

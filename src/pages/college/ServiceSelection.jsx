@@ -4,6 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Car, Bus, Bike, CreditCard } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { useToast } from "@/components/ui/use-toast"
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
 export default function ServiceSelection() {
   const [selectedServices, setSelectedServices] = useState({
@@ -11,6 +15,9 @@ export default function ServiceSelection() {
     shuttle: false,
     rental: false
   })
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
+  const { toast } = useToast()
 
   const services = [
     {
@@ -33,13 +40,6 @@ export default function ServiceSelection() {
       description: "Bike and vehicle rentals for students",
       price: 4999,
       icon: Bike
-    },
-    {
-      id: "Complementary",
-      name: "Complementary Marketing",
-      description: "Absolutely Free Marketing services for your college",
-      price: 0.00,
-      icon: Bus
     }
   ]
 
@@ -49,9 +49,62 @@ export default function ServiceSelection() {
     }, 0)
   }
 
-  const handlePayment = () => {
-    // TODO: Integrate payment gateway
-    console.log("Processing payment for:", selectedServices)
+  const handlePayment = async () => {
+    try {
+      setLoading(true)
+      
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+      
+      // Get selected services array
+      const selectedServiceIds = Object.entries(selectedServices)
+        .filter(([_, selected]) => selected)
+        .map(([id]) => id)
+        .filter(id => ['cab', 'shuttle', 'rental'].includes(id)); // Only allow valid services
+
+      if (selectedServiceIds.length === 0) {
+        throw new Error('Please select at least one service');
+      }
+
+      // Create payment link
+      const response = await fetch(`${API_URL}/payments/create-order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          amount: calculateTotal(),
+          services: selectedServiceIds
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create payment link');
+      }
+
+      const { paymentLink } = await response.json()
+      if (!paymentLink) {
+        throw new Error('Invalid payment link received');
+      }
+
+      // Redirect to Razorpay payment link
+      window.location.href = paymentLink;
+    } catch (error) {
+      console.error('Payment error:', error)
+      toast({
+        title: "Payment Failed",
+        description: error.message || "Please try again later",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -116,11 +169,11 @@ export default function ServiceSelection() {
             <Button
               className="w-full mt-4"
               size="lg"
-              disabled={!Object.values(selectedServices).some(Boolean)}
+              disabled={!Object.values(selectedServices).some(Boolean) || loading}
               onClick={handlePayment}
             >
               <CreditCard className="h-4 w-4 mr-2" />
-              Proceed to Payment
+              {loading ? "Processing..." : "Proceed to Payment"}
             </Button>
           </CardContent>
         </Card>

@@ -8,6 +8,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import 'leaflet-routing-machine';
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
+import { toast, Toaster } from 'sonner';
 
 // Fix for default marker icon
 delete L.Icon.Default.prototype._getIconUrl;
@@ -209,23 +210,6 @@ export default function RideDetails() {
         return;
       }
 
-      // First refresh the ride data to ensure we have the latest status
-      const refreshResponse = await fetch(`${API_BASE}/rides/${rideId}`, {
-        credentials: 'include'
-      });
-      
-      if (!refreshResponse.ok) {
-        throw new Error('Failed to refresh ride data');
-      }
-      
-      const refreshedRide = await refreshResponse.json();
-      console.log('Refreshed ride status:', refreshedRide.status);
-      
-      // Only allow starting if status is 'accepted'
-      if (refreshedRide.status !== 'accepted') {
-        throw new Error(`Cannot start ride in ${refreshedRide.status} status. Ride must be accepted first.`);
-      }
-
       console.log('Starting ride with OTP:', otpInput);
       const response = await fetch(`${API_BASE}/rides/start-ride?rideId=${rideId}&otp=${otpInput}`, {
         method: 'GET',
@@ -235,29 +219,34 @@ export default function RideDetails() {
         }
       });
 
-      if (response.ok) {
-        const updatedRide = await response.json();
-        console.log('Ride started, updated status:', updatedRide.status);
-        setRide(updatedRide);
-        
-        // Emit ride-started event
-        if (socket) {
-          socket.emit('ride-started', { 
-            rideId,
-            status: 'ongoing'
-          });
-        }
-        
-        // Clear OTP input and hide the input field
-        setOtpInput('');
-        setShowOtpInput(false);
-      } else {
+      if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to start ride');
       }
+
+      const updatedRide = await response.json();
+      console.log('Ride started, updated status:', updatedRide.status);
+      setRide(updatedRide);
+      
+      // Emit ride-started event
+      if (socket) {
+        socket.emit('ride-started', { 
+          rideId,
+          status: 'ongoing'
+        });
+      }
+      
+      // Clear OTP input and hide the input field
+      setOtpInput('');
+      setShowOtpInput(false);
+      
+      // Show success message
+      toast.success('Ride started successfully!');
     } catch (error) {
       console.error('Error starting ride:', error);
-      alert(error.message);
+      toast.error(error.message || 'Failed to start ride');
+      // Keep OTP input visible if there was an error
+      setShowOtpInput(true);
     }
   };
 
@@ -371,6 +360,7 @@ export default function RideDetails() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
+      <Toaster position="top-right" expand={true} richColors />
       {/* Cancel Confirmation UI */}
       {showCancelConfirm && !cancelMessage && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[100]">
@@ -458,7 +448,7 @@ export default function RideDetails() {
               </div>
               <div>
                 <p className="font-medium">
-                  {ride.user?.fullname?.firstname} {ride.user?.fullname?.lastname}
+                  {ride.user?.name}
                 </p>
                 <p className="text-sm text-gray-500">
                   {ride.user?.phone || 'No phone number'}

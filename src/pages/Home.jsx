@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom"
 import { ArrowRight, BookOpen, Car, GraduationCap, School, Check, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { ThemeToggle } from '@/components/theme-toggle';
 import { useEffect } from "react"
 
 const navigationItems = ["Features", "How It Works", "Pricing", "Contact"]
@@ -111,6 +112,7 @@ export default function Home() {
           </nav>
           
           <div className="flex items-center gap-6">
+            <ThemeToggle />
             <Link to="/login">
               <Button variant="ghost" className="font-medium hover:text-primary text-sm h-9">
                 Log In
@@ -133,12 +135,10 @@ export default function Home() {
             <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
               <div className="flex flex-col justify-center space-y-8">
                 <div className="space-y-6">
-                  <h1 className="hero-heading">
-                    Transportation
-                    <br />
-                    Reimagined for
-                    <br />
-                    Education
+                  <h1 className="hero-heading flex flex-col gap-5">
+                    <div>Transportation</div>
+                    <div>Reimagined for</div>
+                    <div>Education</div>
                   </h1>
                   <p className="max-w-[600px] text-lg text-muted-foreground md:text-xl">
                     Destini connects schools, students, and drivers in one seamless platform. Experience affordable rides, efficient campus solutions, and a better way to commute.
