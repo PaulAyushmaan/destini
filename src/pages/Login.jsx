@@ -64,18 +64,23 @@ function Login() {
       localStorage.setItem('token', data.token);
 
       // Handle driver vs user data storage
-      if (formData.role === 'driver') {
-        if (!data.captain) {
-          throw new Error('No driver data received');
-        }
-        localStorage.setItem('driverId', data.captain._id);
-        localStorage.setItem('driverData', JSON.stringify(data.captain));
-        
-        // Add a small delay to ensure data is stored before navigation
-        await new Promise(resolve => setTimeout(resolve, 100));
-        navigate('/driver');
-        return;
-      } else {
+      // In the login success handler:
+// Modify the login success handler
+if (formData.role === 'driver') {
+  if (!data.captain) {
+    throw new Error('No driver data received');
+  }
+  
+  // Store all data
+  localStorage.setItem('token', data.token);
+  localStorage.setItem('driverData', JSON.stringify(data.captain));
+  
+  // Wait for the next tick to ensure context updates
+  setTimeout(() => {
+    navigate('/driver');
+  }, 50);
+  return;
+}else {
         localStorage.setItem('user', JSON.stringify(data.user));
         // Redirect based on role
         switch (data.user.role) {

@@ -20,52 +20,105 @@ export const DriverProvider = ({ children }) => {
   const [isAvailable, setIsAvailable] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize driver data from localStorage and fetch current status
-  useEffect(() => {
-    const initializeDriver = async () => {
+  // Add this at the top of your DriverProvider component
+const [initialized, setInitialized] = useState(false);
+
+// Modify your initialization useEffect
+useEffect(() => {
+  const initializeDriver = async () => {
+    try {
+      setIsLoading(true);
+      const token = localStorage.getItem('token');
+      const storedDriverData = localStorage.getItem('driverData');
+
+      // If no token exists, mark as initialized and return
+      if (!token) {
+        setInitialized(true);
+        setIsLoading(false);
+        return;
+      }
+
+      // If we have stored data, use it immediately
+      if (storedDriverData) {
+        const driver = JSON.parse(storedDriverData);
+        setDriverData(driver);
+        setIsAvailable(driver.status === 'available');
+      }
+
+      // Always try to fetch fresh data
       try {
-        setIsLoading(true);
-        const token = localStorage.getItem('token');
-        const storedDriverData = localStorage.getItem('driverData');
-        
-        if (storedDriverData) {
-          const driver = JSON.parse(storedDriverData);
-          setDriverData(driver);
-          setIsAvailable(driver.status === 'available');
-        }
-        
-        // Always fetch current status from server if we have a token
-        if (token) {
-          try {
-            const freshData = await fetchDriverStatus();
-            if (freshData) {
-              setDriverData(freshData);
-              setIsAvailable(freshData.status === 'available');
-            } else {
-              // If we couldn't get fresh data and have no stored data, clear everything
-              if (!storedDriverData) {
-                localStorage.removeItem('driverData');
-                localStorage.removeItem('token');
-                setDriverData(null);
-              }
-            }
-          } catch (error) {
-            console.error('Error fetching fresh driver data:', error);
-            // If server fetch fails but we have stored data, keep using it
-            if (!storedDriverData) {
-              localStorage.removeItem('driverData');
-              localStorage.removeItem('token');
-              setDriverData(null);
-            }
-          }
+        const freshData = await fetchDriverStatus();
+        if (freshData) {
+          setDriverData(freshData);
+          setIsAvailable(freshData.status === 'available');
+          localStorage.setItem('driverData', JSON.stringify(freshData));
+        } else if (!storedDriverData) {
+          // No data from server and no stored data - clear everything
+          localStorage.removeItem('driverData');
+          localStorage.removeItem('token');
+          setDriverData(null);
         }
       } catch (error) {
-        console.error('Error in driver initialization:', error);
-        setDriverData(null);
-      } finally {
-        setIsLoading(false);
+        console.error('Error fetching fresh driver data:', error);
+        if (!storedDriverData) {
+          localStorage.removeItem('driverData');
+          localStorage.removeItem('token');
+          setDriverData(null);
+        }
       }
-    };
+    } finally {
+      setInitialized(true);
+      setIsLoading(false);
+    }
+  };
+
+  initializeDriver();
+}, []);
+
+  // Initialize driver data from localStorage and fetch current status
+  useEffect(() => {
+// In the initialization useEffect:
+const initializeDriver = async () => {
+  try {
+    setIsLoading(true);
+    const token = localStorage.getItem('token');
+    const storedDriverData = localStorage.getItem('driverData');
+    
+    // Immediately set stored data if available
+    if (storedDriverData) {
+      const driver = JSON.parse(storedDriverData);
+      setDriverData(driver);
+      setIsAvailable(driver.status === 'available');
+    }
+    
+    // Then try to fetch fresh data
+    if (token) {
+      try {
+        const freshData = await fetchDriverStatus();
+        if (freshData) {
+          setDriverData(freshData);
+          setIsAvailable(freshData.status === 'available');
+          localStorage.setItem('driverData', JSON.stringify(freshData));
+        } else if (!storedDriverData) {
+          // No fresh data and no stored data - clear everything
+          localStorage.removeItem('driverData');
+          localStorage.removeItem('token');
+          setDriverData(null);
+        }
+      } catch (error) {
+        console.error('Error fetching fresh driver data:', error);
+        // If we have stored data, continue with it
+        if (!storedDriverData) {
+          localStorage.removeItem('driverData');
+          localStorage.removeItem('token');
+          setDriverData(null);
+        }
+      }
+    }
+  } finally {
+    setIsLoading(false);
+  }
+};
 
     initializeDriver();
   }, []);
@@ -320,6 +373,7 @@ export const DriverProvider = ({ children }) => {
   };
 
   const value = {
+    initialized, 
     socket,
     driverData,
     isAvailable,

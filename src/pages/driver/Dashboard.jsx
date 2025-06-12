@@ -13,6 +13,7 @@ const API_BASE = 'http://localhost:4000';
 export default function Dashboard() {
   const { socket, newRide, setNewRide } = useContext(SocketContext);
   const { 
+    initialized,
     driverData, 
     isAvailable, 
     toggleAvailability, 
@@ -84,23 +85,58 @@ export default function Dashboard() {
 
   // Check for driver data and initialize socket on mount
   useEffect(() => {
-    console.log('Driver data:', driverData);
-    console.log('Is Loading:', isLoading);
-    
-    // Don't make any decisions while the context is still loading
-    if (isLoading) {
-      console.log('Still loading driver data...');
-      return;
-    }
-    
-    // Only redirect if we're not loading and have no driver data
-    if (!driverData) {
-      console.log('No driver data found after loading, redirecting to login');
-      localStorage.removeItem('token');
-      localStorage.removeItem('driverData');
+  console.log('Driver data:', driverData);
+  console.log('Is Loading:', isLoading);
+  console.log('Initialized:', initialized);
+
+  // Don't do anything until context is fully initialized
+  if (!initialized || isLoading) {
+    console.log('Context not fully initialized yet');
+    return;
+  }
+
+  const token = localStorage.getItem('token');
+  const storedDriverData = localStorage.getItem('driverData');
+
+  // If no token exists, redirect to login
+  if (!token) {
+    console.log('No token found, redirecting to login');
+    navigate('/login');
+    return;
+  }
+
+  // If we have a token but no driver data in context, check localStorage
+  if (token && !driverData) {
+    if (storedDriverData) {
+      // If localStorage has data but context doesn't, update context
+      console.log('Found driver data in localStorage, updating context');
+      const driver = JSON.parse(storedDriverData);
+      setDriverData(driver);
+      setIsAvailable(driver.status === 'available');
+    } else {
+      // No data anywhere, redirect to login
+      console.log('Token exists but no driver data found, redirecting to login');
       navigate('/login');
       return;
     }
+  }
+    // console.log('Driver data:', driverData);
+    // console.log('Is Loading:', isLoading);
+    
+    // // Don't make any decisions while the context is still loading
+    // if (isLoading) {
+    //   console.log('Still loading driver data...');
+    //   return;
+    // }
+    
+    // // Only redirect if we're not loading and have no driver data
+    // if (!driverData) {
+    //   console.log('No driver data found after loading, redirecting to login');
+    //   localStorage.removeItem('token');
+    //   localStorage.removeItem('driverData');
+    //   navigate('/login');
+    //   return;
+    // }
 
     console.log('Driver data loaded:', driverData._id, 'Status:', driverData.status);
     console.log('Socket status:', socket?.connected ? 'Connected' : 'Not connected');
@@ -113,7 +149,7 @@ export default function Dashboard() {
     }
     
     setLoading(false);
-  }, [driverData, isLoading, socket?.connected, isAvailable]);
+  }, [driverData, isLoading, socket?.connected, isAvailable,navigate,initialized]);
 
   // Function to fetch available rides
   const fetchAvailableRides = async () => {

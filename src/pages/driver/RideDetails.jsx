@@ -211,11 +211,13 @@ export default function RideDetails() {
       }
 
       console.log('Starting ride with OTP:', otpInput);
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE}/rides/start-ride?rideId=${rideId}&otp=${otpInput}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -284,11 +286,12 @@ export default function RideDetails() {
       if (!driverId) {
         throw new Error('Driver ID not found');
       }
-
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE}/rides/end-ride`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         credentials: 'include',
         body: JSON.stringify({

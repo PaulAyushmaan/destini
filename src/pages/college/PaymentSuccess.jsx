@@ -24,7 +24,7 @@ export default function PaymentSuccess() {
 
     const fetchStatus = async () => {
       try {
-        const token = localStorage.getItem('token')
+        const token = localStorage.getItem('token') ||localStorage.getItem('user')?.token
         if (!token) {
           throw new Error("Authentication token not found")
         }
@@ -65,6 +65,7 @@ export default function PaymentSuccess() {
           console.log('Received updated user data:', userData);
           
           // Update localStorage with new user data
+          localStorage.setItem('token', userData.token); // Update token if needed
           localStorage.setItem('user', JSON.stringify(userData));
           console.log('Updated localStorage with new user data');
 
@@ -75,7 +76,7 @@ export default function PaymentSuccess() {
           })
           
           // Navigate to dashboard after a short delay
-          setTimeout(() => navigate('/college'), 2000)
+          setTimeout(() => navigate('/college?payment=success'), 2000)
         } else if (data.status === "created") {
           setError("Payment not completed")
         } else {
@@ -136,4 +137,4 @@ export default function PaymentSuccess() {
       </div>
     </div>
   )
-} 
+}

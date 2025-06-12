@@ -99,6 +99,7 @@ export default function Register() {
           },
           email: formData.email,
           password: formData.password,
+          phone: formData.phone,
           vehicle: {
             color: formData.vehicleColor,
             plate: formData.vehiclePlate,
@@ -147,6 +148,7 @@ export default function Register() {
       }
       
       // For college and student roles
+      localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
 
       // Redirect based on role

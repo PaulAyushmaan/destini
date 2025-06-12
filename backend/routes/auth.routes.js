@@ -13,7 +13,8 @@ router.get('/me', authUser, async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        
+         // Get the token from the request (cookie or header)
+        const token = req.cookies.token || (req.headers.authorization && req.headers.authorization.split(' ')[1]);
         res.json({
             id: user._id,
             name: user.name,
@@ -24,7 +25,8 @@ router.get('/me', authUser, async (req, res) => {
             licenseNumber: user.licenseNumber,
             phone: user.phone,
             isPaid: user.isPaid,
-            services: user.services
+            services: user.services,
+            token
         });
     } catch (error) {
         console.error('Error fetching user data:', error);

@@ -163,12 +163,13 @@ export default function DashboardLayout({ portal = "user", children }) {
     const checkPaymentStatus = async () => {
       if (portal === "college") {
         try {
-          // We'll rely on the cookie that's already working
+          const token = localStorage.getItem('token');
           const response = await fetch(`${API_URL}/auth/me`, {
             method: 'GET',
-            credentials: 'include', // This enables sending cookies
+            credentials: 'include',
             headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
             }
           });
 
@@ -176,15 +177,20 @@ export default function DashboardLayout({ portal = "user", children }) {
             const data = await response.json();
             console.log('Payment status check response:', data);
             setIsPaid(data.isPaid || false);
-            
             // Update localStorage with fresh data
+            localStorage.setItem('token', data.token); // Update token if needed
             localStorage.setItem('user', JSON.stringify(data));
           } else {
             console.error('Payment status check failed:', response.status);
-            // If authentication failed, we might want to handle token expiration
-            if (response.status === 401) {
+            // Only clear localStorage if not in payment flow or after payment redirect
+            const isPaymentPage = window.location.pathname.includes('payment') || window.location.search.includes('payment') || document.referrer.includes('payment');
+            if (response.status === 401 && !isPaymentPage) {
               console.log('Token expired or invalid, user might need to re-login');
-              // You might want to redirect to login or handle token refresh here
+              localStorage.removeItem('user');
+              // Optionally redirect to login here
+            } else if (response.status === 401 && isPaymentPage) {
+              // On payment page or after payment, do NOT clear token, just log the error
+              console.warn('401 during payment flow or after payment, not clearing token.');
             }
           }
         } catch (error) {
@@ -192,7 +198,6 @@ export default function DashboardLayout({ portal = "user", children }) {
         }
       }
     };
-
     checkPaymentStatus();
   }, [portal]);
 
@@ -299,4 +304,4 @@ export default function DashboardLayout({ portal = "user", children }) {
       </div>
     </div>
   )
-} 
+}
