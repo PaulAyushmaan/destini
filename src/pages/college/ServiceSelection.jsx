@@ -31,14 +31,14 @@ export default function ServiceSelection() {
       id: "shuttle",
       name: "Shuttle Service",
       description: "Regular shuttle routes for campus transport",
-      price: 19999,
+      price: 15999,
       icon: Bus
     },
     {
       id: "rental",
       name: "Campus Rentals",
       description: "Bike and vehicle rentals for students",
-      price: 1,
+      price: 20000,
       icon: Bike
     }
   ]

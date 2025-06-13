@@ -70,17 +70,15 @@ if (formData.role === 'driver') {
   if (!data.captain) {
     throw new Error('No driver data received');
   }
-  
   // Store all data
   localStorage.setItem('token', data.token);
+  localStorage.setItem('driverId', data.captain._id);
   localStorage.setItem('driverData', JSON.stringify(data.captain));
   
-  // Wait for the next tick to ensure context updates
-  setTimeout(() => {
-    navigate('/driver');
-  }, 50);
+  // Force a full page reload to /driver for drivers
+  window.location.href = '/driver';
   return;
-}else {
+} else {
         localStorage.setItem('user', JSON.stringify(data.user));
         // Redirect based on role
         switch (data.user.role) {
@@ -195,4 +193,4 @@ if (formData.role === 'driver') {
   )
 }
 
-export default Login 
+export default Login

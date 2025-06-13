@@ -32,7 +32,7 @@ export default function Dashboard() {
         <div className="rounded-xl border bg-card p-6">
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium text-muted-foreground">Monthly Revenue</p>
-            <h3 className="text-2xl font-bold">$12,450</h3>
+            <h3 className="text-2xl font-bold">₹12,450</h3>
             <p className="text-sm text-green-500 flex items-center">
               <ArrowUp className="h-4 w-4 mr-1" />
               8% from last month

@@ -140,7 +140,7 @@ export default function Register() {
         }
         localStorage.setItem('driverId', data.captain._id);
         localStorage.setItem('driverData', JSON.stringify(data.captain));
-        navigate('/driver');
+        window.location.href = '/driver';
         return;
       }
 
