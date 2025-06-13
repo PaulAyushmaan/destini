@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Bus, Car, Bike } from "lucide-react"
+import { Link } from "react-router-dom"
 
 export default function Services() {
   const services = [
@@ -9,21 +10,24 @@ export default function Services() {
       description: "On-demand cab service for students",
       icon: Car,
       activeUsers: 150,
-      status: "Active"
+      status: "Active",
+      key:"cab"
     },
     {
       name: "Shuttle Service",
       description: "Regular shuttle routes for campus transport",
       icon: Bus,
       activeUsers: 300,
-      status: "Active"
+      status: "Active",
+      key:"shuttle"
     },
     {
-      name: "Campus Rentals",
+      name: "Bike Rentals",
       description: "Bike and vehicle rentals for students",
       icon: Bike,
       activeUsers: 75,
-      status: "Active"
+      status: "Active",
+      key:"bike"
     }
   ]
 
@@ -55,9 +59,11 @@ export default function Services() {
                     <span>Status</span>
                     <span className="font-medium text-green-600">{service.status}</span>
                   </div>
-                  <Button className="w-full" variant="outline">
+                  <Link to={`/college/services/${service.key}`}>
+                    <Button className="w-full" variant="outline">
                     Manage Service
                   </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>

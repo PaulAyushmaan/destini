@@ -11,11 +11,11 @@ module.exports.createRide = async (req, res) => {
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
     }
-    const { userId, pickup, destination, vehicleType } = req.body;
+    const { pickup, destination, vehicleType } = req.body;
     console.log('Creating ride with data:', req.body);
     try {
         // Create the ride first
-        const ride = await rideService.createRide({ user: userId, pickup, destination, vehicleType });
+        const ride = await rideService.createRide({ user: req.user._id, pickup, destination, vehicleType });
         console.log('Ride created:', ride);
         
         // Get pickup coordinates
@@ -143,15 +143,10 @@ module.exports.endRide = async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const { rideId, driverId } = req.body;
+    const { rideId } = req.body;
 
     try {
-        // Find the captain first
-        const captain = await captainModel.findOne({ _id: driverId });
-        if (!captain) {
-            return res.status(404).json({ message: 'Captain not found' });
-        }
-
+        const captain = req.captain;
         const ride = await rideService.endRide({ rideId, captain });
 
         // Get the IO instance
@@ -182,28 +177,23 @@ module.exports.endRide = async (req, res) => {
 module.exports.acceptRide = async (req, res) => {
     try {
         const { rideId } = req.params;
-        const { driverId } = req.body;
-
-        console.log('Accepting ride:', { rideId, driverId });
+        console.log('Accepting ride:', { rideId });
 
         // Update ride status
         const updatedRide = await rideModel.findByIdAndUpdate(
             rideId,
             { 
                 status: 'accepted',
-                captain: driverId
+                captain: req.captain._id
             },
             { new: true }
-        ).populate('user');
+        ).populate([
+            { path: 'user', select: 'fullname email socketId' },
+            { path: 'captain', select: 'fullname vehicle socketId' }
+        ]);
 
         if (!updatedRide) {
             return res.status(404).json({ message: 'Ride not found' });
-        }
-
-        // Get captain details
-        const captain = await captainModel.findOne({ _id: driverId });
-        if (!captain) {
-            return res.status(404).json({ message: 'Captain not found' });
         }
 
         // Emit socket event
@@ -212,18 +202,24 @@ module.exports.acceptRide = async (req, res) => {
             // Emit to all users in the 'users' room
             io.to('users').emit('ride-accepted', {
                 rideId,
-                driverId,
-                driverName: captain.fullname,
-                vehicleDetails: captain.vehicle
+                captain: {
+                    _id: req.captain._id,
+                    fullname: req.captain.fullname,
+                    vehicle: req.captain.vehicle
+                },
+                ride: updatedRide
             });
 
-            // Emit to specific user who requested the ride
-            if (updatedRide.user) {
-                io.to(updatedRide.user.toString()).emit('ride-accepted', {
+            // Emit specifically to the user who requested the ride
+            if (updatedRide.user && updatedRide.user.socketId) {
+                io.to(updatedRide.user.socketId).emit('ride-accepted', {
                     rideId,
-                    driverId,
-                    driverName: captain.fullname,
-                    vehicleDetails: captain.vehicle
+                    captain: {
+                        _id: req.captain._id,
+                        fullname: req.captain.fullname,
+                        vehicle: req.captain.vehicle
+                    },
+                    ride: updatedRide
                 });
             }
         }
@@ -258,16 +254,23 @@ module.exports.cancelRide = async (req, res) => {
     try {
         const { rideId } = req.params;
 
+        // Find the ride first to check its status
+        const ride = await rideModel.findById(rideId);
+        if (!ride) {
+            return res.status(404).json({ message: 'Ride not found' });
+        }
+
+        // Prevent cancellation if ride is accepted
+        if (ride.status === 'accepted') {
+            return res.status(400).json({ message: 'Cannot cancel ride after it has been accepted by a driver' });
+        }
+
         // Find and update the ride
         const updatedRide = await rideModel.findByIdAndUpdate(
             rideId,
             { status: 'cancelled' },
             { new: true }
         ).populate('user').populate('captain');
-
-        if (!updatedRide) {
-            return res.status(404).json({ message: 'Ride not found' });
-        }
 
         // Get the IO instance
         const io = getIO();
@@ -299,5 +302,22 @@ module.exports.cancelRide = async (req, res) => {
     } catch (error) {
         console.error('Error cancelling ride:', error);
         return res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports.getAvailableRides = async (req, res) => {
+    try {
+        // Get rides that are in pending status and don't have a captain assigned
+        const availableRides = await rideModel.find({
+            status: 'pending',
+            captain: { $exists: false }
+        }).populate('user');
+
+        console.log('Available rides found:', availableRides.length);
+        
+        return res.status(200).json(availableRides);
+    } catch (error) {
+        console.error('Error fetching available rides:', error);
+        return res.status(500).json({ message: 'Error fetching available rides' });
     }
 };

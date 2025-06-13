@@ -2,12 +2,13 @@ import { useContext, useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { SocketContext } from '../../lib/SocketContext';
 import { Button } from '@/components/ui/button';
-import { Car, MapPin, Clock, User, Wallet, Navigation } from 'lucide-react';
+import { Car, MapPin, Clock, User, Wallet, Navigation, Phone } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import 'leaflet-routing-machine';
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
+import { toast, Toaster } from 'sonner';
 
 // Fix for default marker icon
 delete L.Icon.Default.prototype._getIconUrl;
@@ -95,6 +96,7 @@ export default function AwaitingDriver() {
       // If ride has a driver, set driver details
       if (data.captain) {
         setDriver(data.captain);
+        console.log('Driver details:', data.captain);
       }
 
       // Fetch coordinates if not in state
@@ -148,14 +150,40 @@ export default function AwaitingDriver() {
     // Listen for ride acceptance
     socket.on('ride-accepted', (data) => {
       console.log('Ride accepted event received:', data);
-      if (data.ride && data.ride._id === rideId) {
-        setRide(data.ride);
-        setDriver(data.driver);
-        setConfirmedRide(data.ride);
+      if (data.rideId === rideId || data._id === rideId) {
+        console.log('Updating ride with accepted data:', data);
+        setRide(data.ride || data);
+        
+        // // Extract captain details properly
+        // const captainData = data.captain || data.ride?.captain;
+        // console.log('Captain details11:', captainData);
+        // console.log('Driver detailsss:', driver);
+        // if (driver) {
+        //   setDriver({
+        //     name: `${driver.fullname.firstname} ${driver.fullname.lastname || ''}`.trim(),
+        //     vehicleDetails: {
+        //       model: `${driver.vehicle.color} ${driver.vehicle.vehicleType}`,
+        //       number: driver.vehicle.plate
+        //     },
+        //     eta: '10' // Example ETA, you might want to calculate this dynamically
+        //   });
+        // }
+        
+        setConfirmedRide(data);
+        
+        // Show OTP notification
+        const rideOtp = data.otp || data.ride?.otp;
+        if (rideOtp) {
+          toast.success('Ride Accepted!', {
+            description: `Your ride OTP is: ${rideOtp}. Share this with your driver to start the ride.`,
+            duration: 10000, // Show for 10 seconds
+          });
+        }
+        
         // Show notification
         if ('Notification' in window && Notification.permission === 'granted') {
           new Notification('Ride Accepted!', {
-            body: `Your ride has been accepted by ${data.driver.name}`,
+            body: `Your ride has been accepted by ${captainData ? captainData.fullname.firstname : 'a driver'}`,
             icon: '/logo.png'
           });
         }
@@ -302,6 +330,7 @@ export default function AwaitingDriver() {
 
   return (
     <div className="min-h-screen bg-gray-100">
+      <Toaster position="top-right" expand={true} richColors />
       {/* Cancel Confirmation UI */}
       {showCancelConfirm && !cancelMessage && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[100]">
@@ -440,20 +469,24 @@ export default function AwaitingDriver() {
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3">
                     <User className="w-5 h-5 text-blue-500" />
-                    <p className="text-gray-600">{driver.name}</p>
+                    <p className="text-gray-600">{driver.fullname.firstname.charAt(0).toUpperCase() + driver.fullname.firstname.slice(1)} {driver.fullname.lastname.charAt(0).toUpperCase() + driver.fullname.lastname.slice(1)}</p>
                   </div>
-                  {driver.vehicleDetails && (
+                  <div className="flex items-center space-x-3">
+                    <Phone className="w-5 h-5 text-blue-500" />
+                    <p className="text-gray-600">{driver.phone}</p>
+                  </div>
+                  {driver.vehicle && (
                     <div className="flex items-center space-x-3">
                       <Car className="w-5 h-5 text-green-500" />
                       <p className="text-gray-600">
-                        {driver.vehicleDetails.model} - {driver.vehicleDetails.number}
+                        {driver.vehicle.color} {driver.vehicle.vehicleType} - Vehicle No: {driver.vehicle.plate}
                       </p>
                     </div>
                   )}
-                  {driver.eta && (
+                  {driver && (
                     <div className="flex items-center space-x-3">
                       <Navigation className="w-5 h-5 text-red-500" />
-                      <p className="text-gray-600">ETA: {driver.eta} minutes</p>
+                      <p className="text-gray-600">ETA: 5 minutes</p>
                     </div>
                   )}
                   {ride.otp && (
@@ -475,8 +508,8 @@ export default function AwaitingDriver() {
               </div>
             )}
 
-            {/* Show Cancel Ride button only when status is not ongoing, completed, or cancelled */}
-            {ride?.status !== 'ongoing' && ride?.status !== 'completed' && ride?.status !== 'cancelled' && (
+            {/* Show Cancel Ride button only when status is not ongoing, completed, cancelled, or accepted */}
+            {ride?.status !== 'ongoing' && ride?.status !== 'completed' && ride?.status !== 'cancelled' && ride?.status !== 'accepted' && (
               <Button
                 onClick={handleCancelClick}
                 className="w-full bg-red-500 hover:bg-red-600"

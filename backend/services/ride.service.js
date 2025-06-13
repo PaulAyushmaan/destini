@@ -1,48 +1,109 @@
 const rideModel = require('../models/ride.model');
 const mapService = require('./maps.service');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
 async function getFare(pickup, destination) {
-
     if (!pickup || !destination) {
         throw new Error('Pickup and destination are required');
     }
 
     const distanceTime = await mapService.getDistanceTime(pickup, destination);
-    console.log(distanceTime);
+    console.log('Distance and Time:', distanceTime);
 
+    // Base fare for each vehicle type
     const baseFare = {
-        auto: 30,
-        car: 50,
-        moto: 20
-    };
-
-    const perKmRate = {
         auto: 10,
-        car: 15,
-        moto: 8
+        car: 30,
+        moto: 15
     };
 
-    const perMinuteRate = {
-        auto: 2,
+    // Per kilometer rate
+    const perKmRate = {
+        auto: 1,
         car: 3,
+        moto: 2
+    };
+
+    // Per minute rate
+    const perMinuteRate = {
+        auto: 1,
+        car: 2,
         moto: 1.5
     };
 
+    // Get current time for time-based pricing
+    const currentHour = new Date().getHours();
+    const isNightTime = currentHour >= 22 || currentHour < 5;
+    const isRushHour = (currentHour >= 8 && currentHour <= 10) || (currentHour >= 17 && currentHour <= 19);
 
+    // Time-based multipliers
+    const timeMultiplier = isNightTime ? 1.5 : isRushHour ? 1.3 : 1.0;
 
-const fare = {
-    auto: Math.round(baseFare.auto + (distanceTime.distance * perKmRate.auto) + (distanceTime.duration * perMinuteRate.auto)),
-    car: Math.round(baseFare.car + (distanceTime.distance * perKmRate.car) + (distanceTime.duration * perMinuteRate.car)),
-    moto: Math.round(baseFare.moto + (distanceTime.distance * perKmRate.moto) + (distanceTime.duration * perMinuteRate.moto))
-};
+    // Distance-based surge pricing
+    const distanceMultiplier = (() => {
+        if (distanceTime.distance > 20) return 1.4; // Long distance premium
+        if (distanceTime.distance > 10) return 1.2; // Medium distance premium
+        return 1.0; // Normal distance
+    })();
 
-    console.log(fare);
+    // Duration-based surge pricing
+    const durationMultiplier = (() => {
+        if (distanceTime.duration > 60) return 1.3; // Long duration premium
+        if (distanceTime.duration > 30) return 1.15; // Medium duration premium
+        return 1.0; // Normal duration
+    })();
 
+    // Calculate base fare components
+    const calculateFare = (vehicleType) => {
+        const base = baseFare[vehicleType];
+        const distanceComponent = distanceTime.distance * perKmRate[vehicleType];
+        const timeComponent = distanceTime.duration * perMinuteRate[vehicleType];
+
+        // Apply multipliers
+        const totalFare = (base + distanceComponent + timeComponent) * 
+                         timeMultiplier * 
+                         distanceMultiplier * 
+                         durationMultiplier;
+
+        // Add minimum fare guarantee
+        const minimumFare = baseFare[vehicleType] * 1.5;
+        
+        // Add waiting time component (if applicable)
+        const waitingTimeComponent = Math.min(distanceTime.duration * 0.5, 50); // Cap at 50 rupees
+
+        return Math.round(Math.max(totalFare + waitingTimeComponent, minimumFare));
+    };
+
+    const fare = {
+        auto: calculateFare('auto'),
+        car: calculateFare('car'),
+        moto: calculateFare('moto')
+    };
+
+    // Add fare breakdown for transparency
+    const fareBreakdown = {
+        baseFares: baseFare,
+        distanceComponent: {
+            auto: Math.round(distanceTime.distance * perKmRate.auto),
+            car: Math.round(distanceTime.distance * perKmRate.car),
+            moto: Math.round(distanceTime.distance * perKmRate.moto)
+        },
+        timeComponent: {
+            auto: Math.round(distanceTime.duration * perMinuteRate.auto),
+            car: Math.round(distanceTime.duration * perMinuteRate.car),
+            moto: Math.round(distanceTime.duration * perMinuteRate.moto)
+        },
+        multipliers: {
+            timeMultiplier,
+            distanceMultiplier,
+            durationMultiplier
+        },
+        finalFares: fare
+    };
+
+    console.log('Fare Breakdown:', fareBreakdown);
     return fare;
-
-
 }
 
 module.exports.getFare = getFare;
@@ -58,24 +119,42 @@ function getOtp(num) {
 
 
 module.exports.createRide = async ({ user, pickup, destination, vehicleType }) => {
-    if (!pickup || !destination || !vehicleType) {
-        throw new Error('All fields are required');
+    try {
+        // Get distance and duration
+        const { distance, duration } = await mapService.getDistanceTime(pickup, destination);
+        
+        // Calculate fare
+        const fare = await this.getFare(pickup, destination);
+        
+        // Generate 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // Create the ride
+        const ride = await rideModel.create({
+            user,
+            pickup,
+            destination,
+            vehicleType,
+            fare: fare[vehicleType],
+            otp,
+            distance,
+            duration
+        });
+
+        console.log('Created ride:', {
+            id: ride._id,
+            pickup,
+            destination,
+            vehicleType,
+            fare: fare[vehicleType]
+        });
+
+        return ride;
+    } catch (error) {
+        console.error('Error in createRide service:', error);
+        throw error;
     }
-
-    const fare = await getFare(pickup, destination);
-
-
-
-    const ride = await rideModel.create({
-        ...(user ? { user } : {}),
-        pickup,
-        destination,
-        otp: getOtp(6),
-        fare: fare[vehicleType]
-    });
-
-    return ride;
-}
+};
 
 module.exports.confirmRide = async ({
     rideId, captain

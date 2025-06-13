@@ -1,43 +1,48 @@
 const mongoose = require('mongoose');
 
-
 const rideSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'user',
-        required: false // Changed from true to false to allow guest rides
+        ref: 'User',
+        required: true
     },
     captain: {
-        type: String,
-        ref: 'captain',
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Captain'
     },
     pickup: {
         type: String,
-        required: true,
+        required: true
     },
     destination: {
         type: String,
-        required: true,
+        required: true
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'accepted', 'ongoing', 'completed', 'cancelled'],
+        default: 'pending'
     },
     fare: {
         type: Number,
-        required: true,
+        required: true
     },
-
-    status: {
+    vehicleType: {
         type: String,
-        enum: [ 'pending', 'accepted', "ongoing", 'completed', 'cancelled' ],
-        default: 'pending',
+        enum: ['car', 'motorcycle', 'auto'],
+        required: true
     },
-
+    otp: {
+        type: String,
+        required: true,
+        select: false
+    },
     duration: {
         type: Number,
     }, // in seconds
-
     distance: {
         type: Number,
     }, // in meters
-
     paymentID: {
         type: String,
     },
@@ -47,12 +52,10 @@ const rideSchema = new mongoose.Schema({
     signature: {
         type: String,
     },
+}, {
+    timestamps: true
+});
 
-    otp: {
-        type: String,
-        select: false,
-        required: true,
-    },
-})
-
-module.exports = mongoose.model('ride', rideSchema);
+// Create and export the model
+const Ride = mongoose.model('Ride', rideSchema);
+module.exports = Ride;

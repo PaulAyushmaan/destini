@@ -1,12 +1,13 @@
 import { Button } from "@/components/ui/button"
 import { Car, Clock, MapPin, Calendar, ArrowRight } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate,Link } from "react-router-dom"
 
 export default function Dashboard() {
   const navigate = useNavigate()
 
   return (
     <div className="grid gap-6">
+      {/* Header Actions */}
       {/* Quick Actions */}
       <div className="grid gap-6 md:grid-cols-3">
         <Button
@@ -59,7 +60,7 @@ export default function Dashboard() {
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <h4 className="font-medium">Campus to Downtown</h4>
-                  <span className="text-sm text-muted-foreground">$12.50</span>
+                  <span className="text-sm text-muted-foreground">₹125</span>
                 </div>
                 <p className="text-sm text-muted-foreground">March 25, 2024 - 2:30 PM</p>
                 <div className="mt-2 flex items-center gap-2 text-sm">
@@ -78,7 +79,7 @@ export default function Dashboard() {
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <h4 className="font-medium">Library to Student Housing</h4>
-                  <span className="text-sm text-muted-foreground">$8.75</span>
+                  <span className="text-sm text-muted-foreground">₹300</span>
                 </div>
                 <p className="text-sm text-muted-foreground">March 24, 2024 - 5:45 PM</p>
                 <div className="mt-2 flex items-center gap-2 text-sm">
@@ -97,7 +98,7 @@ export default function Dashboard() {
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <h4 className="font-medium">Mall to Campus</h4>
-                  <span className="text-sm text-muted-foreground">$15.00</span>
+                  <span className="text-sm text-muted-foreground">₹150</span>
                 </div>
                 <p className="text-sm text-muted-foreground">March 23, 2024 - 7:15 PM</p>
                 <div className="mt-2 flex items-center gap-2 text-sm">
@@ -109,10 +110,12 @@ export default function Dashboard() {
             </div>
           </div>
 
+          <Link to="/user/rides">
           <Button variant="link" className="mt-6 w-full">
             View All Rides
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
+          </Link>
         </div>
       </div>
 

@@ -9,35 +9,49 @@ const userRoutes = require('./routes/user.routes');
 const captainRoutes = require('./routes/captain.routes');
 const mapsRoutes = require('./routes/maps.routes');
 const rideRoutes = require('./routes/ride.routes');
+const authRoutes = require('./routes/auth.routes');
+const paymentRoutes = require('./routes/payment.routes');
 
 connectToDb();
 
-app.use(cors({
-  origin: [
+// CORS configuration with specific origins and credentials
+const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:5174',
     'http://127.0.0.1:5173',
     'http://127.0.0.1:5174'
-  ],
-  credentials: true
+];
+
+app.use(cors({
+    origin: function(origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) === -1) {
+            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    credentials: true
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
-
 
 app.get('/', (req, res) => {
     res.send('Hello World');
 });
 
+app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 app.use('/captains', captainRoutes);
 app.use('/maps', mapsRoutes);
 app.use('/rides', rideRoutes);
-
-
-
+app.use('/payments', paymentRoutes);
 
 module.exports = app;
 

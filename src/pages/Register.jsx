@@ -1,7 +1,9 @@
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { Car, School, GraduationCap, Bike, Home } from "lucide-react"
 import { Button } from "@/components/ui/button"
+
+const API_BASE = 'http://localhost:4000';
 
 export default function Register() {
   const [selectedRole, setSelectedRole] = useState(null)
@@ -15,11 +17,18 @@ export default function Register() {
     institutionName: "",
     studentId: "",
     licenseNumber: "",
+    // Additional fields for driver/captain
+    lastName: "",
+    vehicleColor: "",
+    vehiclePlate: "",
+    vehicleCapacity: "",
+    vehicleType: "car", // Default value
   })
+  const navigate = useNavigate();
 
   const roles = [
     {
-      id: "school",
+      id: "college",
       title: "School/College",
       icon: School,
       description: "Register your institution to provide transportation services",
@@ -56,11 +65,108 @@ export default function Register() {
     }))
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // Handle form submission based on role
-    console.log('Form submitted:', { role: selectedRole, ...formData })
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+
+    try {
+      let endpoint = `${API_BASE}/auth/register`;
+      let requestBody = {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+        role: selectedRole,
+      };
+
+      // Handle different role-specific data
+      if (selectedRole === 'student') {
+        requestBody.studentId = formData.studentId;
+      } else if (selectedRole === 'college') {
+        requestBody.institutionName = formData.institutionName;
+      } else if (selectedRole === 'driver') {
+        // Use the captain registration endpoint for drivers
+        endpoint = `${API_BASE}/captains/register`;
+        requestBody = {
+          fullname: {
+            firstname: formData.name,
+            lastname: formData.lastName
+          },
+          email: formData.email,
+          password: formData.password,
+          phone: formData.phone,
+          vehicle: {
+            color: formData.vehicleColor,
+            plate: formData.vehiclePlate,
+            capacity: parseInt(formData.vehicleCapacity),
+            vehicleType: formData.vehicleType
+          }
+        };
+        console.log('Driver registration data:', requestBody);
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody),
+        credentials: 'include'  // Important for cookies
+      });
+
+      const data = await response.json();
+      console.log('Registration response:', data);
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
+      }
+
+      // Make sure we have a token before storing it
+      if (!data.token) {
+        throw new Error('No token received from server');
+      }
+
+      // Store token and user data
+      localStorage.setItem('token', data.token);
+      
+      if (selectedRole === 'driver') {
+        if (!data.captain) {
+          throw new Error('No driver data received');
+        }
+        localStorage.setItem('driverId', data.captain._id);
+        localStorage.setItem('driverData', JSON.stringify(data.captain));
+        window.location.href = '/driver';
+        return;
+      }
+
+      if (!data.user) {
+        throw new Error('No user data received');
+      }
+      
+      // For college and student roles
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
+      // Redirect based on role
+      switch (selectedRole) {
+        case 'student':
+          navigate('/user');
+          break;
+        case 'college':
+          navigate('/college');
+          break;
+        default:
+          navigate('/');
+      }
+    } catch (error) {
+      alert(error.message);
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -186,7 +292,7 @@ export default function Register() {
                   </div>
 
                   {/* Role-specific fields */}
-                  {selectedRole === "school" && (
+                  {selectedRole === "college" && (
                     <div className="space-y-2">
                       <label className="text-sm font-medium leading-none">Institution Name</label>
                       <input
@@ -217,18 +323,75 @@ export default function Register() {
                   )}
 
                   {selectedRole === "driver" && (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium leading-none">Driver's License Number</label>
-                      <input
-                        name="licenseNumber"
-                        type="text"
-                        value={formData.licenseNumber}
-                        onChange={handleInputChange}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder="Enter your license number"
-                        required
-                      />
-                    </div>
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium leading-none">Last Name</label>
+                        <input
+                          name="lastName"
+                          type="text"
+                          value={formData.lastName}
+                          onChange={handleInputChange}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          placeholder="Enter your last name"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium leading-none">Vehicle Color</label>
+                        <input
+                          name="vehicleColor"
+                          type="text"
+                          value={formData.vehicleColor}
+                          onChange={handleInputChange}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          placeholder="Enter vehicle color"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium leading-none">Vehicle Plate Number</label>
+                        <input
+                          name="vehiclePlate"
+                          type="text"
+                          value={formData.vehiclePlate}
+                          onChange={handleInputChange}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          placeholder="Enter vehicle plate number"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium leading-none">Vehicle Capacity</label>
+                        <input
+                          name="vehicleCapacity"
+                          type="number"
+                          value={formData.vehicleCapacity}
+                          onChange={handleInputChange}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          placeholder="Enter vehicle capacity"
+                          min="1"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium leading-none">Vehicle Type</label>
+                        <select
+                          name="vehicleType"
+                          value={formData.vehicleType}
+                          onChange={handleInputChange}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          required
+                        >
+                          <option value="car">Car</option>
+                          <option value="motorcycle">Motorcycle</option>
+                          <option value="auto">Auto</option>
+                        </select>
+                      </div>
+                    </>
                   )}
                 </div>
 
