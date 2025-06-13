@@ -5,7 +5,6 @@ import { useDriver } from '../../contexts/DriverContext';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Car, MapPin, Clock, User, Wallet, Navigation } from 'lucide-react';
-import LogoutButton from '@/components/LogoutButton';
 import { toast, Toaster } from 'sonner';
 
 const API_BASE = 'http://localhost:4000';
@@ -418,9 +417,6 @@ export default function Dashboard() {
       <Toaster position="top-right" expand={true} richColors />
       <div className="max-w-4xl mx-auto space-y-6 p-6">
         {/* Header Actions */}
-        <div className="flex justify-end items-center mb-4">
-          <LogoutButton />
-        </div>
         {/* Driver Status */}
         <div className="bg-card text-card-foreground rounded-xl shadow-sm p-6">
           <div className="flex items-center justify-between">

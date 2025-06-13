@@ -107,6 +107,7 @@ export default function Register() {
             vehicleType: formData.vehicleType
           }
         };
+        console.log('Driver registration data:', requestBody);
       }
 
       const response = await fetch(endpoint, {

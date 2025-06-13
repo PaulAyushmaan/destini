@@ -2,7 +2,7 @@ import { Link } from "react-router-dom"
 import { ArrowRight, BookOpen, Car, GraduationCap, School, Check, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from '@/components/theme-toggle';
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 const navigationItems = ["Features", "How It Works", "Pricing", "Contact"]
 
@@ -90,6 +90,32 @@ export default function Home() {
     }
   }
 
+  // Auth state for header buttons
+  const [dashboardRoute, setDashboardRoute] = useState(null)
+
+  useEffect(() => {
+    // Check localStorage for auth and user type
+    const token = localStorage.getItem('token')
+    const driverData = localStorage.getItem('driverData')
+    const userData = localStorage.getItem('user')
+    if (token) {
+      if (driverData) {
+        setDashboardRoute('/driver')
+      } else if (userData) {
+        try {
+          const user = JSON.parse(userData)
+          if (user.role === 'student') setDashboardRoute('/user')
+          else if (user.role === 'college') setDashboardRoute('/college')
+          else setDashboardRoute('/')
+        } catch {
+          setDashboardRoute('/')
+        }
+      }
+    } else {
+      setDashboardRoute(null)
+    }
+  }, [])
+
   return (
     <div className="flex min-h-screen flex-col antialiased">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -98,7 +124,6 @@ export default function Home() {
             <Car className="h-6 w-6 text-primary" />
             <span>Destini</span>
           </Link>
-          
           <nav className="hidden md:flex items-center gap-10">
             {navigationItems.map((item) => (
               <button
@@ -110,19 +135,28 @@ export default function Home() {
               </button>
             ))}
           </nav>
-          
           <div className="flex items-center gap-6">
             <ThemeToggle />
-            <Link to="/login">
-              <Button variant="ghost" className="font-medium hover:text-primary text-sm h-9">
-                Log In
-              </Button>
-            </Link>
-            <Link to="/register">
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm h-9 px-6 rounded-full shadow-lg shadow-primary/25 hover:shadow-primary/50 transition-all duration-300">
-                Register Now
-              </Button>
-            </Link>
+            {dashboardRoute ? (
+              <Link to={dashboardRoute}>
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm h-9 px-6 rounded-full shadow-lg shadow-primary/25 hover:shadow-primary/50 transition-all duration-300">
+                  Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="ghost" className="font-medium hover:text-primary text-sm h-9">
+                    Log In
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm h-9 px-6 rounded-full shadow-lg shadow-primary/25 hover:shadow-primary/50 transition-all duration-300">
+                    Register Now
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -498,4 +532,4 @@ export default function Home() {
       </footer>
     </div>
   )
-} 
+}

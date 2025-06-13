@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 
-const LogoutButton = () => {
+const LogoutButton = ({ onAfterLogout }) => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -22,6 +22,10 @@ const LogoutButton = () => {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.removeItem('driverData');
+      localStorage.removeItem('driverId');
+
+      // Optionally close dropdown
+      if (onAfterLogout) onAfterLogout();
 
       // Redirect to login page
       console.log('Logging out');
@@ -35,7 +39,7 @@ const LogoutButton = () => {
     <Button 
       variant="ghost" 
       size="sm" 
-      className="gap-2 text-red-500 hover:text-red-600 hover:bg-red-50"
+      className="gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 w-full text-left px-4 py-2 text-sm rounded-b-lg"
       onClick={handleLogout}
     >
       <LogOut className="h-4 w-4" />
@@ -44,4 +48,4 @@ const LogoutButton = () => {
   );
 };
 
-export default LogoutButton; 
+export default LogoutButton;

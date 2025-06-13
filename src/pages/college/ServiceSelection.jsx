@@ -38,7 +38,7 @@ export default function ServiceSelection() {
       id: "rental",
       name: "Campus Rentals",
       description: "Bike and vehicle rentals for students",
-      price: 4999,
+      price: 1,
       icon: Bike
     }
   ]

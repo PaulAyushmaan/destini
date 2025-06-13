@@ -1,9 +1,11 @@
 import { Link, Outlet, useLocation } from "react-router-dom"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import { createPortal } from 'react-dom';
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from '@/components/theme-toggle';
+import LogoutButton from '@/components/LogoutButton'
 import {
   LayoutDashboard,
   Users,
@@ -131,7 +133,10 @@ export default function DashboardLayout({ portal = "user", children }) {
   const location = useLocation()
   const config = portalConfig[portal]
   const [isPaid, setIsPaid] = useState(false)
-  
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileBtnRef = useRef(null);
+  const dropdownRef = useRef(null);
+
   // Get user/driver info from localStorage based on portal type
   let userData = null;
   try {
@@ -178,8 +183,18 @@ export default function DashboardLayout({ portal = "user", children }) {
             console.log('Payment status check response:', data);
             setIsPaid(data.isPaid || false);
             // Update localStorage with fresh data
-            localStorage.setItem('token', data.token); // Update token if needed
+            console.log('Updating localStorage with new user data',data);
+            
+            if (data.token) {
+              localStorage.setItem('token', data.token); // Update token if needed
+            }
             localStorage.setItem('user', JSON.stringify(data));
+            // Delay redirect to ensure localStorage is updated and UI is stable
+            setTimeout(() => {
+              if (window.location.pathname === '/college/payment-success') {
+                window.location.replace('/college?payment=success');
+              }
+            }, 2000); // 1.2 seconds delay
           } else {
             console.error('Payment status check failed:', response.status);
             // Only clear localStorage if not in payment flow or after payment redirect
@@ -209,6 +224,49 @@ export default function DashboardLayout({ portal = "user", children }) {
 
   // Get current page name
   const currentPage = navigationItems.find(item => item.href === location.pathname)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      // If click is inside the dropdown, do not close
+      if (
+        (profileBtnRef.current && profileBtnRef.current.contains(event.target)) ||
+        (dropdownRef.current && dropdownRef.current.contains(event.target))
+      ) {
+        return;
+      }
+      setShowProfileMenu(false);
+    }
+    if (showProfileMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showProfileMenu]);
+
+  // Dropdown menu as a portal
+  const dropdownMenu = showProfileMenu ? createPortal(
+    <div
+      ref={dropdownRef}
+      id="profile-dropdown-portal"
+      className="fixed right-8 top-16 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-[2147483647] animate-fade-in pointer-events-auto"
+      style={{ zIndex: 2147483647 }}
+    >
+      <Link
+        to={`/${portal}/settings`}
+        className="w-full block text-left px-4 py-2 text-sm hover:bg-gray-100 rounded-t-lg"
+        onClick={() => setShowProfileMenu(false)}
+      >
+        Settings
+      </Link>
+      <div className="border-t my-1" />
+      <LogoutButton onAfterLogout={() => setShowProfileMenu(false)} />
+    </div>,
+    document.body
+  ) : null;
 
   return (
     <div className="flex h-screen bg-background">
@@ -260,7 +318,7 @@ export default function DashboardLayout({ portal = "user", children }) {
       </div>
 
       {/* Main Content - Scrollable */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col">
         {/* Top Bar */}
         <header className="border-b bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 py-4">
           <div className="flex items-center justify-between">
@@ -273,13 +331,20 @@ export default function DashboardLayout({ portal = "user", children }) {
                 </span>
                 <Bell className="h-6 w-6" />
               </button>
-              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium hover:bg-primary/90 transition-colors">
-                {initials}
+              <div className="relative">
+                <button
+                  ref={profileBtnRef}
+                  className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+                  onClick={() => setShowProfileMenu((v) => !v)}
+                  aria-label="Profile menu"
+                >
+                  {initials}
+                </button>
               </div>
             </div>
           </div>
         </header>
-
+        {dropdownMenu}
         {/* Scrollable Content Area */}
         <main className="flex-1 overflow-y-auto p-6 animate-fade-in">
           {isCollegeUnpaid ? (

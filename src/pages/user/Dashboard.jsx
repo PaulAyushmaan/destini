@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Car, Clock, MapPin, Calendar, ArrowRight } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import LogoutButton from '@/components/LogoutButton'
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -9,9 +8,6 @@ export default function Dashboard() {
   return (
     <div className="grid gap-6">
       {/* Header Actions */}
-      <div className="flex justify-end items-center mb-4">
-        <LogoutButton />
-      </div>
       {/* Quick Actions */}
       <div className="grid gap-6 md:grid-cols-3">
         <Button

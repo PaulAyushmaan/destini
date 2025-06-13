@@ -24,9 +24,26 @@ export default function PaymentSuccess() {
 
     const fetchStatus = async () => {
       try {
-        const token = localStorage.getItem('token') ||localStorage.getItem('user')?.token
+        console.log(localStorage.getItem('user')?.token);
+        // Get token from localStorage (try to recover if missing)
+        let token = localStorage.getItem('token');
         if (!token) {
-          throw new Error("Authentication token not found")
+          // Try to recover from user object if possible
+          const userStr = localStorage.getItem('user');
+          if (userStr) {
+            try {
+              const userObj = JSON.parse(userStr);
+              if (userObj.token){ 
+                token = userObj.token;
+              localStorage.setItem('token', userObj.token);
+            }
+            } catch {}
+          }
+        }
+        if (!token) {
+          setError("Authentication token not found");
+          setStatus("error");
+          return;
         }
 
         // First, check payment status
@@ -63,9 +80,18 @@ export default function PaymentSuccess() {
 
           const userData = await userRes.json();
           console.log('Received updated user data:', userData);
-          
           // Update localStorage with new user data
-          localStorage.setItem('token', userData.token); // Update token if needed
+          // Only update token if present, otherwise preserve the old token
+          if (userData.token) {
+            localStorage.setItem('token', userData.token);
+          } else {
+            // If token is missing from userData, ensure it is also present in the user object for future recovery
+            const oldToken = localStorage.getItem('token');
+            if (oldToken) {
+              userData.token = oldToken;
+              localStorage.setItem('user', JSON.stringify(userData));
+            }
+          }
           localStorage.setItem('user', JSON.stringify(userData));
           console.log('Updated localStorage with new user data');
 
@@ -74,9 +100,7 @@ export default function PaymentSuccess() {
             description: "Your services have been activated",
             variant: "success"
           })
-          
-          // Navigate to dashboard after a short delay
-          setTimeout(() => navigate('/college?payment=success'), 2000)
+          // No redirect here; handled by DashboardLayout.jsx
         } else if (data.status === "created") {
           setError("Payment not completed")
         } else {
