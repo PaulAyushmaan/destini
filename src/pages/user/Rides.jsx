@@ -2,10 +2,62 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import React, { useEffect, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Car, Bus, Bike, MapPin, Clock, Star } from "lucide-react"
 
 export default function UserRides() {
+
+  const [rides, setRides] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
+const formatTimeToIST = (dateString) => {
+  const date = new Date(dateString);
+  
+  // Convert to IST (UTC+5:30)
+  const istOffset = 5.5 * 60 * 60 * 1000; // IST is 5 hours 30 minutes ahead of UTC
+  const istTime = new Date(date.getTime() + istOffset);
+  
+  // Extract hours and minutes in 12-hour format
+  let hours = istTime.getUTCHours();
+  const minutes = istTime.getUTCMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  
+  // Convert to 12-hour format
+  hours = hours % 12;
+  hours = hours || 12; // Handle midnight (0 becomes 12)
+  
+  // Format as "8:30 AM"
+  return `${hours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+};
+
+  useEffect(() => {
+      async function fetchRides() {
+        setLoading(true);
+        try {
+          const token = localStorage.getItem('token');
+          const res = await fetch(`${import.meta.env.VITE_BASE_URL || 'http://localhost:4000'}/rides/get_rides`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            credentials: 'include'
+          });
+          const data = await res.json();
+          console.log('Fetched rides:', data);
+          setRides(data.rides || []);
+        } catch {
+          setRides([]);
+        }
+        setLoading(false);
+      }
+      fetchRides();
+    }, []);
+
   return (
     <div className="container mx-auto py-6">
       <h1 className="text-3xl font-bold mb-6">My Rides</h1>
@@ -61,9 +113,72 @@ export default function UserRides() {
       </Card>
 
       {/* Ride History */}
+      {loading ? (
+        <div className="text-center py-12 text-base font-medium">Loading...</div>
+      ) : rides.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground text-base">No scheduled rides found.</div>
+      ) : (
       <div className="space-y-4">
+        <h2 className="text-2xl font-semibold mb-4">Ride History</h2>
         {/* Completed Ride */}
-        <Card>
+        {rides.map(ride => {
+          let vehicle = ride.vehicleType || 'Cab'; // Default to Cab if vehicleType is not set
+          if (ride.vehicleType === 'auto') {
+            vehicle = 'Campus Shuttle'; // Normalize vehicle type for display
+          }
+          else if (ride.vehicleType === 'moto') {
+            vehicle = 'Electric Toto'; // Normalize vehicle type for display
+          }
+          else if (ride.vehicleType === 'car') {
+            vehicle = 'Private Cab'; // Normalize vehicle type for display
+          }
+          else {
+            vehicle = 'Campus Rentals'; // Default to Cab for other types
+          }
+          return(
+          <Card>
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Car className="h-4 w-4" />
+                  <span className="font-medium">{`${vehicle}`}</span>
+                </div>
+                <div className="text-sm text-muted-foreground">{`${formatDate(ride.createdAt)}`}</div>
+              </div>
+              <div className="text-right">
+                <div className="font-medium">₹{`${ride.fare}`}</div>
+                <div className="text-sm text-muted-foreground">{`${ride.status}`}</div>
+              </div>
+            </div>
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-green-500" />
+                <span>{`${ride.pickup}`}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-red-500" />
+                <span>{`${ride.destination}`}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                <span>{`${formatTimeToIST(ride.createdAt)}`}</span>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center gap-2">
+              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+              <span className="text-sm">4.5</span>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <Button variant="outline" size="sm">View Details</Button>
+              <Button variant="outline" size="sm">Book Again</Button>
+            </div>
+          </CardContent>
+        </Card>
+          )
+
+        })}
+        {/* <Card>
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
@@ -101,10 +216,10 @@ export default function UserRides() {
               <Button variant="outline" size="sm">Book Again</Button>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* In Progress Ride */}
-        <Card>
+        {/* <Card>
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
@@ -138,10 +253,10 @@ export default function UserRides() {
               <Button variant="outline" size="sm">Cancel Ride</Button>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Cancelled Ride */}
-        <Card>
+        {/* <Card>
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
@@ -171,8 +286,9 @@ export default function UserRides() {
               <Button variant="outline" size="sm">Book Again</Button>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
+      )}
     </div>
   )
 } 

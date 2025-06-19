@@ -321,3 +321,96 @@ module.exports.getAvailableRides = async (req, res) => {
         return res.status(500).json({ message: 'Error fetching available rides' });
     }
 };
+
+// Schedule a ride
+module.exports.scheduleRide = async (req, res) => {
+    const errors = validationResult(req);
+    console.log('Scheduling ride with request body:', req.body);
+    console.log('User from request:', errors);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+    console.log('Scheduling ride with data:', req.body);
+    const { pickup, destination, vehicleType, scheduleStartDate, schedulePeriod } = req.body;
+    try {
+        // Create the scheduled ride
+        const ride = await rideService.scheduleRide({
+            user: req.user._id,
+            pickup,
+            destination,
+            vehicleType,
+            scheduleStartDate,
+            schedulePeriod
+        });
+        console.log('Scheduled ride created:', ride);
+        // Optionally, notify captains or handle scheduling logic here
+        res.status(201).json(ride);
+    } catch (err) {
+        console.error('Error scheduling ride:', err);
+        return res.status(500).json({ message: err.message });
+    }
+};
+
+// Get all scheduled rides for a user
+module.exports.getScheduledRides = async (req, res) => {
+    try {
+        const rides = await rideModel.find({
+            user: req.user._id,
+            isScheduled: true
+        }).sort({ scheduleStartDate: -1 });
+        res.json({ rides });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+module.exports.getRides = async (req, res) => {
+    try {
+        const rides = await rideModel.find({ user: req.user._id })
+            .sort({ createdAt: -1 });
+        res.json({ rides });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+}
+// Edit a scheduled ride's period and time
+module.exports.editScheduledRide = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+    const { rideId } = req.params;
+    const { scheduleStartDate, schedulePeriod } = req.body;
+    try {
+        const ride = await rideModel.findOne({ _id: rideId, user: req.user._id, isScheduled: true });
+        if (!ride) return res.status(404).json({ message: 'Scheduled ride not found' });
+        // Recalculate fare
+        const fareObj = await require('../services/ride.service').getFare(ride.pickup, ride.destination);
+        const baseFare = fareObj[ride.vehicleType];
+        const periodMultipliers = {
+            'one-time': 1,
+            '15-days': 14,
+            '1-month': 30,
+            '3-months': 90,
+            '6-months': 180,
+            '1-year': 365
+        };
+        const periodDiscounts = {
+            'one-time': 0,
+            '15-days': 0.10,
+            '1-month': 0.15,
+            '3-months': 0.20,
+            '6-months': 0.25,
+            '1-year': 0.30
+        };
+        const multiplier = periodMultipliers[schedulePeriod] || 1;
+        const discount = periodDiscounts[schedulePeriod] || 0;
+        const newFare = Math.round(baseFare * multiplier * (1 - discount));
+        ride.scheduleStartDate = scheduleStartDate;
+        ride.schedulePeriod = schedulePeriod;
+        ride.fare = newFare;
+        await ride.save();
+        res.json({ ride });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};

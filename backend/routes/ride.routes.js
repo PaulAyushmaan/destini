@@ -44,6 +44,32 @@ router.post('/end-ride',
     rideController.endRide
 );
 
+router.post('/schedule',
+    authMiddleware.authUser,
+    body('pickup').isString().isLength({ min: 3 }).withMessage('Invalid pickup address'),
+    body('destination').isString().isLength({ min: 3 }).withMessage('Invalid destination address'),
+    body('vehicleType').isString().isIn(['auto', 'car', 'moto']).withMessage('Invalid vehicle type'),
+    body('scheduleStartDate').isISO8601().withMessage('Invalid schedule date'),
+    body('schedulePeriod').isString().isIn(['one-time', '15-days', '1-month', '3-months', '6-months', '1-year']).withMessage('Invalid schedule period'),
+    rideController.scheduleRide
+);
+
+// Edit scheduled ride (PUT)
+router.put('/:rideId/edit-schedule',
+    authMiddleware.authUser,
+    body('scheduleStartDate').isISO8601().withMessage('Invalid date'),
+    body('schedulePeriod').isString().isIn(['one-time','15-days','1-month','3-months','6-months','1-year']).withMessage('Invalid period'),
+    rideController.editScheduledRide
+);
+
+// Get all scheduled rides for the logged-in user
+router.get('/scheduled', authMiddleware.authUser, rideController.getScheduledRides);
+
+router.get("/get_rides",
+    authMiddleware.authUser,
+    rideController.getRides
+);
+
 // Dynamic routes should be at the bottom
 router.post('/:rideId/accept',
     authMiddleware.authCaptain,

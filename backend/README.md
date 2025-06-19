@@ -25,7 +25,7 @@ The request body should be in JSON format and include the following fields:
 - `user` (object):
   - `fullname` (object).
     - `firstname` (string): User's first name (minimum 3 characters).
-    - `lastname` (string): User's last name (minimum 3 characters).   
+    - `lastname` (string): User's last name (minimum 3 characters).
   - `email` (string): User's email address (must be a valid email).
   - `password` (string): User's password (minimum 6 characters).
 - `token` (String): JWT Token
@@ -56,7 +56,7 @@ The request body should be in JSON format and include the following fields:
 - `user` (object):
   - `fullname` (object).
     - `firstname` (string): User's first name (minimum 3 characters).
-    - `lastname` (string): User's last name (minimum 3 characters).   
+    - `lastname` (string): User's last name (minimum 3 characters).
   - `email` (string): User's email address (must be a valid email).
   - `password` (string): User's password (minimum 6 characters).
 - `token` (String): JWT Token
@@ -81,10 +81,8 @@ Requires a valid JWT token in the Authorization header:
 - `user` (object):
   - `fullname` (object).
     - `firstname` (string): User's first name (minimum 3 characters).
-    - `lastname` (string): User's last name (minimum 3 characters).   
+    - `lastname` (string): User's last name (minimum 3 characters).
   - `email` (string): User's email address (must be a valid email).
-
-
 
 ## `/users/logout` Endpoint
 
@@ -103,7 +101,7 @@ Requires a valid JWT token in the Authorization header or cookie:
 - `user` (object):
   - `fullname` (object).
     - `firstname` (string): User's first name (minimum 3 characters).
-    - `lastname` (string): User's last name (minimum 3 characters).   
+    - `lastname` (string): User's last name (minimum 3 characters).
   - `email` (string): User's email address (must be a valid email).
   - `password` (string): User's password (minimum 6 characters).
 - `token` (String): JWT Token## `/captains/register` Endpoint
@@ -129,10 +127,9 @@ The request body should be in JSON format and include the following fields:
   - `color` (string, required): Vehicle color (minimum 3 characters)
   - `plate` (string, required): Vehicle plate number (minimum 3 characters)
   - `capacity` (number, required): Vehicle passenger capacity (minimum 1)
-  - `vehicleType` (string, required): Type of vehicle (must be 'car', 'motorcycle', or 'auto')
+  - `vehicleType` (string, required): Type of vehicle (must be 'car', 'moto', or 'auto')
 
 ### Example Response
-
 
 ## `/captains/register` Endpoint
 
@@ -164,7 +161,7 @@ The request body should be in JSON format and include the following fields:
 - `captain` (object):
   - `fullname` (object).
     - `firstname` (string): Captain's first name (minimum 3 characters).
-    - `lastname` (string): Captain's last name (minimum 3 characters).   
+    - `lastname` (string): Captain's last name (minimum 3 characters).
   - `email` (string): Captain's email address (must be a valid email).
   - `password` (string): Captain's password (minimum 6 characters).
   - `vehicle` (object):
@@ -200,7 +197,7 @@ The request body should be in JSON format and include the following fields:
 - `captain` (object):
   - `fullname` (object).
     - `firstname` (string): Captain's first name (minimum 3 characters).
-    - `lastname` (string): Captain's last name (minimum 3 characters).   
+    - `lastname` (string): Captain's last name (minimum 3 characters).
   - `email` (string): Captain's email address (must be a valid email).
   - `password` (string): Captain's password (minimum 6 characters).
   - `vehicle` (object):
@@ -230,7 +227,7 @@ Requires a valid JWT token in the Authorization header:
 - `captain` (object):
   - `fullname` (object).
     - `firstname` (string): Captain's first name (minimum 3 characters).
-    - `lastname` (string): Captain's last name (minimum 3 characters).   
+    - `lastname` (string): Captain's last name (minimum 3 characters).
   - `email` (string): Captain's email address (must be a valid email).
   - `vehicle` (object):
     - `color` (string): Vehicle color.
@@ -256,7 +253,6 @@ Requires a valid JWT token in the Authorization header or cookie.
 
 - `message` (string): Logout successfully.
 
-
 ## `/maps/get-coordinates` Endpoint
 
 ### Description
@@ -279,8 +275,8 @@ GET `/maps/get-coordinates?address=1600+Amphitheatre+Parkway,+Mountain+View,+CA`
 
 ```json
 {
-  "ltd": 37.4224764,
-  "lng": -122.0842499
+	"ltd": 37.4224764,
+	"lng": -122.0842499
 }
 ```
 
@@ -291,7 +287,7 @@ GET `/maps/get-coordinates?address=1600+Amphitheatre+Parkway,+Mountain+View,+CA`
 
 ```json
 {
-  "message": "Coordinates not found"
+	"message": "Coordinates not found"
 }
 ```
 
@@ -320,14 +316,14 @@ GET /maps/get-distance-time?origin=New+York,NY&destination=Los+Angeles,CA
 
 ```json
 {
-  "distance": {
-    "text": "2,789 miles",
-    "value": 4486540
-  },
-  "duration": {
-    "text": "1 day 18 hours",
-    "value": 154800
-  }
+	"distance": {
+		"text": "2,789 miles",
+		"value": 4486540
+	},
+	"duration": {
+		"text": "1 day 18 hours",
+		"value": 154800
+	}
 }
 ```
 
@@ -338,7 +334,7 @@ GET /maps/get-distance-time?origin=New+York,NY&destination=Los+Angeles,CA
 
 ```json
 {
-  "message": "No routes found"
+	"message": "No routes found"
 }
 ```
 
@@ -366,8 +362,8 @@ GET /maps/get-suggestions?input=1600+Amphitheatre
 
 ```json
 [
-  "1600 Amphitheatre Parkway, Mountain View, CA, USA",
-  "1600 Amphitheatre Pkwy, Mountain View, CA 94043, USA"
+	"1600 Amphitheatre Parkway, Mountain View, CA, USA",
+	"1600 Amphitheatre Pkwy, Mountain View, CA 94043, USA"
 ]
 ```
 
@@ -378,7 +374,7 @@ GET /maps/get-suggestions?input=1600+Amphitheatre
 
 ```json
 {
-  "message": "Unable to fetch suggestions"
+	"message": "Unable to fetch suggestions"
 }
 ```
 
@@ -424,10 +420,9 @@ The request body should be in JSON format and include the following fields:
 
 ```json
 {
-  "message": "Error message"
+	"message": "Error message"
 }
 ```
-
 
 ## `/rides/get-fare` Endpoint
 
@@ -444,7 +439,7 @@ Retrieves the fare estimate for a ride between the provided pickup and destinati
 Requires a valid JWT token in the Authorization header:
 `Authorization:
 
- Bear
+Bear
 
 er <token>`
 
@@ -463,9 +458,9 @@ GET /rides/get-fare?pickup=1600+Amphitheatre+Parkway,+Mountain+View,+CA&destinat
 
 ```json
 {
-  "auto": 50.0,
-  "car": 75.0,
-  "moto": 40.0
+	"auto": 50.0,
+	"car": 75.0,
+	"moto": 40.0
 }
 ```
 
@@ -476,6 +471,6 @@ GET /rides/get-fare?pickup=1600+Amphitheatre+Parkway,+Mountain+View,+CA&destinat
 
 ```json
 {
-  "message": "Error message"
+	"message": "Error message"
 }
 ```

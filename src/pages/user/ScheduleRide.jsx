@@ -98,16 +98,48 @@ export default function ScheduleRide() {
     }
   };
 
-  const fetchFare = async (pickup, dropoff) => {
+  React.useEffect(() => {
+    if (pickupCoords && dropoffCoords && schedulePeriod) {
+      fetchDistanceTime(pickup, dropoff);
+      fetchFare(pickup, dropoff, schedulePeriod);
+    }
+  }, [pickupCoords, dropoffCoords, schedulePeriod]);
+
+  // Update fetchFare to accept period and calculate total fare
+  const fetchFare = async (pickup, dropoff, period) => {
     setLoadingFare(true);
     try {
       const res = await fetch(`${API_BASE}/rides/get-fare?pickup=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(dropoff)}`, {
         credentials: 'include'
       });
       const data = await res.json();
-      setFare(data.fare || { shuttle: 0, cab: 0, toto: 0 });
+      // Calculate total fare based on period
+      const periodMultipliers = {
+        once: 1,
+        '15days': 14,
+        '1month': 30,
+        '3months': 90,
+        '6months': 180,
+        '1year': 365
+      };
+      const periodDiscounts = {
+        once: 0,
+        '15days': 0.10,
+        '1month': 0.15,
+        '3months': 0.20,
+        '6months': 0.25,
+        '1year': 0.30
+      };
+      const multiplier = periodMultipliers[period] || 1;
+      const discount = periodDiscounts[period] || 0;
+      const calcFare = (base) => Math.round(base * multiplier * (1 - discount));
+      setFare({
+        auto: calcFare(data.fare?.auto || 0),
+        car: calcFare(data.fare?.car || 0),
+        moto: calcFare(data.fare?.moto || 0)
+      });
     } catch {
-      setFare({ shuttle: 0, cab: 0, toto: 0 });
+      setFare({ auto: 0, car: 0, moto: 0 });
     }
     setLoadingFare(false);
   };
@@ -142,23 +174,26 @@ export default function ScheduleRide() {
     fetchCoordinates(suggestion, setDropoffCoords);
   };
 
-  React.useEffect(() => {
-    if (pickupCoords && dropoffCoords) {
-      fetchDistanceTime(pickup, dropoff);
-      fetchFare(pickup, dropoff);
-    }
-  }, [pickupCoords, dropoffCoords]);
+  const periodMap = {
+    once: 'one-time',
+    '15days': '15-days',
+    '1month': '1-month',
+    '3months': '3-months',
+    '6months': '6-months',
+    '1year': '1-year'
+  };
 
   const handleConfirmBooking = async () => {
     setBookingLoading(true);
     try {
-      // Get token from localStorage if it exists
       const token = localStorage.getItem('token');
       const headers = {
         'Content-Type': 'application/json',
         ...(token && { 'Authorization': `Bearer ${token}` })
       };
-
+      // Combine date and time into ISO string
+      const scheduleStartDate = new Date(`${date}T${time}`).toISOString();
+      const mappedPeriod = periodMap[schedulePeriod] || 'one-time';
       const res = await fetch(`${API_BASE}/rides/schedule`, {
         method: 'POST',
         headers,
@@ -167,13 +202,13 @@ export default function ScheduleRide() {
           pickup,
           destination: dropoff,
           vehicleType: vehicleTypes[selectedVehicle].type,
-          date,
-          time,
-          schedulePeriod
+          scheduleStartDate,
+          schedulePeriod: mappedPeriod
         })
       });
       if (res.ok) {
-        navigate('/user/rides');
+        const ride = await res.json();
+        navigate('/user/scheduled-details', { state: { ride } });
       } else {
         const errorData = await res.json();
         alert(errorData.message || 'Scheduling failed!');

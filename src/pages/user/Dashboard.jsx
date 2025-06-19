@@ -37,11 +37,12 @@ export default function Dashboard() {
         <Button
           variant="outline"
           className="h-32 flex flex-col items-center justify-center gap-4 hover:border-primary"
+          onClick={() => navigate('/user/manage-scheduled')}
         >
-          <MapPin className="h-8 w-8 text-primary" />
+          <Calendar className="h-8 w-8 text-primary" />
           <div className="text-center">
-            <h3 className="font-semibold">Saved Places</h3>
-            <p className="text-sm text-muted-foreground">Manage locations</p>
+            <h3 className="font-semibold">Manage Scheduled Rides</h3>
+            <p className="text-sm text-muted-foreground">View & modify your scheduled rides</p>
           </div>
         </Button>
       </div>

@@ -32,6 +32,8 @@ import BookRide from '@/pages/user/BookRide'
 import AwaitingDriver from './pages/user/AwaitingDriver'
 import RideCompleted from './pages/user/RideCompleted'
 import ScheduleRide from '@/pages/user/ScheduleRide'
+import ScheduledRideDetails from '@/pages/user/ScheduledRideDetails'
+import ManageScheduledRides from '@/pages/user/ManageScheduledRides'
 
 // Driver Portal Pages
 import DriverDashboard from '@/pages/driver/Dashboard'
@@ -105,11 +107,13 @@ function App() {
                 <Route path="/user" element={<DashboardLayout portal="user"><UserDashboard /></DashboardLayout>} />
                 <Route path="/user/book" element={<DashboardLayout portal="user"><BookRide /></DashboardLayout>} />
                 <Route path="/user/schedule" element={<DashboardLayout portal="user"><ScheduleRide /></DashboardLayout>} />
+                <Route path="/user/scheduled-details" element={<DashboardLayout portal="user"><ScheduledRideDetails /></DashboardLayout>} />
                 <Route path="/user/rides" element={<DashboardLayout portal="user"><UserRides /></DashboardLayout>} />
                 <Route path="/user/payments" element={<DashboardLayout portal="user"><UserPayments /></DashboardLayout>} />
                 <Route path="/user/settings" element={<DashboardLayout portal="user"><UserSettings /></DashboardLayout>} />
                 <Route path="/user/awaiting-driver/:rideId" element={<AwaitingDriver />} />
                 <Route path="/user/ride-completed/:rideId" element={<RideCompleted />} />
+                <Route path="/user/manage-scheduled" element={<DashboardLayout portal="user"><ManageScheduledRides /></DashboardLayout>} />
               </Route>
 
               {/* Driver Routes */}

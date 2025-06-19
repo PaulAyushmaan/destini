@@ -29,7 +29,7 @@ const rideSchema = new mongoose.Schema({
     },
     vehicleType: {
         type: String,
-        enum: ['car', 'motorcycle', 'auto'],
+        enum: ['car', 'moto', 'auto'],
         required: true
     },
     otp: {
@@ -52,6 +52,24 @@ const rideSchema = new mongoose.Schema({
     signature: {
         type: String,
     },
+    // Scheduled ride fields
+    isScheduled: {
+        type: Boolean,
+        default: false
+    },
+    schedulePeriod: {
+        type: String,
+        enum: ['one-time', '15-days', '1-month', '3-months', '6-months', '1-year'],
+    },
+    scheduleStartDate: {
+        type: Date,
+    },
+    scheduleEndDate: {
+        type: Date,
+    },
+    scheduleDays: [{
+        type: String, // e.g., ['Monday', 'Wednesday'] for recurring weekly
+    }]
 }, {
     timestamps: true
 });

@@ -274,3 +274,58 @@ module.exports.endRide = async ({ rideId, captain }) => {
     return ride;
 }
 
+// Helper: get multiplier for schedule period
+function getSchedulePeriodMultiplier(period) {
+    switch (period) {
+        case '15-days':
+            return { multiplier: 14, discount: 0.10 }; // 14 rides, 10% off
+        case '1-month':
+            return { multiplier: 30, discount: 0.15 }; // 30 rides, 15% off
+        case '3-months':
+            return { multiplier: 90, discount: 0.20 }; // 90 rides, 20% off
+        case '6-months':
+            return { multiplier: 180, discount: 0.25 }; // 180 rides, 25% off
+        case '1-year':
+            return { multiplier: 365, discount: 0.30 }; // 365 rides, 30% off
+        default:
+            return { multiplier: 1, discount: 0 };
+    }
+}
+
+module.exports.scheduleRide = async ({ user, pickup, destination, vehicleType, scheduleStartDate, schedulePeriod }) => {
+    try {
+        // Get distance and duration
+        const { distance, duration } = await mapService.getDistanceTime(pickup, destination);
+        // Calculate base fare
+        const fareObj = await module.exports.getFare(pickup, destination);
+        let fare = fareObj[vehicleType];
+        // Apply schedule period multiplier and discount
+        const { multiplier, discount } = getSchedulePeriodMultiplier(schedulePeriod);
+        let totalFare = fare * multiplier;
+        if (discount > 0) {
+            totalFare = totalFare * (1 - discount);
+        }
+        totalFare = Math.round(totalFare);
+        // Generate 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        // Create the scheduled ride
+        const ride = await rideModel.create({
+            user,
+            pickup,
+            destination,
+            vehicleType,
+            fare: totalFare,
+            otp,
+            distance,
+            duration,
+            isScheduled: true,
+            scheduleStartDate,
+            schedulePeriod
+        });
+        return ride;
+    } catch (error) {
+        console.error('Error in scheduleRide service:', error);
+        throw error;
+    }
+};
+
