@@ -25,6 +25,7 @@ export default function Dashboard() {
         <Button
           variant="outline"
           className="h-32 flex flex-col items-center justify-center gap-4 hover:border-primary"
+          onClick={() => navigate('/user/schedule')}
         >
           <Clock className="h-8 w-8 text-primary" />
           <div className="text-center">
@@ -149,4 +150,4 @@ export default function Dashboard() {
       </div>
     </div>
   )
-} 
+}

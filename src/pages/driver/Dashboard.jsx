@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Car, MapPin, Clock, User, Wallet, Navigation } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 
-const API_BASE = 'http://localhost:4000';
+const API_BASE = import.meta.env.VITE_BASE_URL || 'http://localhost:4000';
 
 export default function Dashboard() {
   const { socket, newRide, setNewRide } = useContext(SocketContext);

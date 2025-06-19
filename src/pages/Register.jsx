@@ -2,8 +2,9 @@ import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Car, School, GraduationCap, Bike, Home } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { toast, Toaster } from 'sonner';
 
-const API_BASE = 'http://localhost:4000';
+const API_BASE = import.meta.env.VITE_BASE_URL || 'http://localhost:4000';
 
 export default function Register() {
   const [selectedRole, setSelectedRole] = useState(null)
@@ -65,12 +66,31 @@ export default function Register() {
     }))
   }
 
+  const validateEmail = (email) => {
+    // Simple email regex
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const validatePhone = (phone) => {
+    // Accepts 10-15 digits, optional +, spaces, dashes, parentheses
+    return /^\+?[0-9\s\-()]{10,15}$/.test(phone);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    // Validate email
+    if (!validateEmail(formData.email)) {
+      toast.error('Please enter a valid email address.');
+      return;
+    }
+    // Validate phone
+    if (!validatePhone(formData.phone)) {
+      toast.error('Please enter a valid phone number.');
+      return;
+    }
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+      toast.error('Passwords does not match');
       return;
     }
 
@@ -170,6 +190,7 @@ export default function Register() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <Toaster position="top-right" expand={true} richColors />
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center justify-between">
           <Link to="/" className="flex items-center gap-2 font-bold">
@@ -227,8 +248,9 @@ export default function Register() {
 
                 <div className="grid gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium leading-none">Full Name</label>
+                    <label htmlFor="name" className="text-sm font-medium leading-none">Full Name</label>
                     <input
+                      id="name"
                       name="name"
                       type="text"
                       value={formData.name}
@@ -240,8 +262,9 @@ export default function Register() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium leading-none">Email</label>
+                    <label htmlFor="email" className="text-sm font-medium leading-none">Email</label>
                     <input
+                      id="email"
                       name="email"
                       type="email"
                       value={formData.email}
@@ -254,8 +277,9 @@ export default function Register() {
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium leading-none">Password</label>
+                      <label htmlFor="password" className="text-sm font-medium leading-none">Password</label>
                       <input
+                        id="password"
                         name="password"
                         type="password"
                         value={formData.password}
@@ -266,8 +290,9 @@ export default function Register() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-medium leading-none">Confirm Password</label>
+                      <label htmlFor="confirmPassword" className="text-sm font-medium leading-none">Confirm Password</label>
                       <input
+                        id="confirmPassword"
                         name="confirmPassword"
                         type="password"
                         value={formData.confirmPassword}
@@ -279,8 +304,9 @@ export default function Register() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium leading-none">Phone Number</label>
+                    <label htmlFor="phone" className="text-sm font-medium leading-none">Phone Number</label>
                     <input
+                      id="phone"
                       name="phone"
                       type="tel"
                       value={formData.phone}
@@ -294,8 +320,9 @@ export default function Register() {
                   {/* Role-specific fields */}
                   {selectedRole === "college" && (
                     <div className="space-y-2">
-                      <label className="text-sm font-medium leading-none">Institution Name</label>
+                      <label htmlFor="institutionName" className="text-sm font-medium leading-none">Institution Name</label>
                       <input
+                        id="institutionName"
                         name="institutionName"
                         type="text"
                         value={formData.institutionName}
@@ -309,8 +336,9 @@ export default function Register() {
 
                   {selectedRole === "student" && (
                     <div className="space-y-2">
-                      <label className="text-sm font-medium leading-none">Student/Faculty ID</label>
+                      <label htmlFor="studentId" className="text-sm font-medium leading-none">Student/Faculty ID</label>
                       <input
+                        id="studentId"
                         name="studentId"
                         type="text"
                         value={formData.studentId}
@@ -325,8 +353,9 @@ export default function Register() {
                   {selectedRole === "driver" && (
                     <>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium leading-none">Last Name</label>
+                        <label htmlFor="lastName" className="text-sm font-medium leading-none">Last Name</label>
                         <input
+                          id="lastName"
                           name="lastName"
                           type="text"
                           value={formData.lastName}
@@ -338,8 +367,9 @@ export default function Register() {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-sm font-medium leading-none">Vehicle Color</label>
+                        <label htmlFor="vehicleColor" className="text-sm font-medium leading-none">Vehicle Color</label>
                         <input
+                          id="vehicleColor"
                           name="vehicleColor"
                           type="text"
                           value={formData.vehicleColor}
@@ -351,8 +381,9 @@ export default function Register() {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-sm font-medium leading-none">Vehicle Plate Number</label>
+                        <label htmlFor="vehiclePlate" className="text-sm font-medium leading-none">Vehicle Plate Number</label>
                         <input
+                          id="vehiclePlate"
                           name="vehiclePlate"
                           type="text"
                           value={formData.vehiclePlate}
@@ -364,8 +395,9 @@ export default function Register() {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-sm font-medium leading-none">Vehicle Capacity</label>
+                        <label htmlFor="vehicleCapacity" className="text-sm font-medium leading-none">Vehicle Capacity</label>
                         <input
+                          id="vehicleCapacity"
                           name="vehicleCapacity"
                           type="number"
                           value={formData.vehicleCapacity}
@@ -378,8 +410,9 @@ export default function Register() {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-sm font-medium leading-none">Vehicle Type</label>
+                        <label htmlFor="vehicleType" className="text-sm font-medium leading-none">Vehicle Type</label>
                         <select
+                          id="vehicleType"
                           name="vehicleType"
                           value={formData.vehicleType}
                           onChange={handleInputChange}
@@ -412,4 +445,4 @@ export default function Register() {
       </main>
     </div>
   )
-} 
+}

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Car, Home } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 
-const API_BASE = 'http://localhost:4000';
+const API_BASE = import.meta.env.VITE_BASE_URL || 'http://localhost:4000';
 
 function Login() {
   const [formData, setFormData] = useState({

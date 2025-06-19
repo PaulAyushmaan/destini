@@ -31,6 +31,7 @@ import UserSettings from '@/pages/user/Settings'
 import BookRide from '@/pages/user/BookRide'
 import AwaitingDriver from './pages/user/AwaitingDriver'
 import RideCompleted from './pages/user/RideCompleted'
+import ScheduleRide from '@/pages/user/ScheduleRide'
 
 // Driver Portal Pages
 import DriverDashboard from '@/pages/driver/Dashboard'
@@ -103,6 +104,7 @@ function App() {
               <Route element={<PrivateRoute allowedRoles={['student']} />}>
                 <Route path="/user" element={<DashboardLayout portal="user"><UserDashboard /></DashboardLayout>} />
                 <Route path="/user/book" element={<DashboardLayout portal="user"><BookRide /></DashboardLayout>} />
+                <Route path="/user/schedule" element={<DashboardLayout portal="user"><ScheduleRide /></DashboardLayout>} />
                 <Route path="/user/rides" element={<DashboardLayout portal="user"><UserRides /></DashboardLayout>} />
                 <Route path="/user/payments" element={<DashboardLayout portal="user"><UserPayments /></DashboardLayout>} />
                 <Route path="/user/settings" element={<DashboardLayout portal="user"><UserSettings /></DashboardLayout>} />

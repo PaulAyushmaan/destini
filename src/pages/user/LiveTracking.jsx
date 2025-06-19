@@ -82,7 +82,7 @@ function LocationMarker() {
       const newPosition = [latitude, longitude];
       
       // Convert accuracy to meters if it's in a different unit
-      const accuracyInMeters = accuracy > 1000 ? accuracy / 1000 : accuracy;
+      const accuracyInMeters = accuracy > 500 ? accuracy / 1000 : accuracy;
       
       // Accept positions with accuracy up to 500 meters
       if (accuracyInMeters <= 1000) {
