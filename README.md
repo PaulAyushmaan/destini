@@ -39,7 +39,7 @@ A full-stack ride-booking platform for students, colleges, and drivers. Built wi
 ### Prerequisites
 
 - Node.js (v18+ recommended)
-- pnpm (or npm/yarn)
+- npm
 - MongoDB instance (local or cloud)
 
 ### 1. Clone the Repository
