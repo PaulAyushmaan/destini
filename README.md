@@ -116,7 +116,8 @@ destini/
 │   ├── services/      # Business logic
 │   ├── app.js         # Express app setup
 │   ├── server.js      # Server entry point
-│   └── ...
+│   ├── socket.js      # Socket.io setup
+│   └── .env           # Environment variables for backend
 ├── public/            # Static assets
 ├── src/               # Frontend React app
 │   ├── components/    # UI components
