@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { CheckCircle2, XCircle } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const API_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:4000';
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams()
