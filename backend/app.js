@@ -1,5 +1,7 @@
-const dotenv = require('dotenv');
-dotenv.config({ path: '../.env' });
+// Conditionally load .env
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config({ path: '../.env' });
+}
 const express = require('express');
 const cors = require('cors');
 const app = express();
@@ -20,8 +22,9 @@ const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:5174',
     'http://127.0.0.1:5173',
-    'http://127.0.0.1:5174'
-];
+    'http://127.0.0.1:5174',
+    process.env.FRONTEND_URL,
+].filter(Boolean) // Filter out any undefined or null values;
 
 app.use(cors({
     origin: function(origin, callback) {
