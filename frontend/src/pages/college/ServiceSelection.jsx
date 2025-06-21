@@ -24,21 +24,21 @@ export default function ServiceSelection() {
       id: "cab",
       name: "Cab Service",
       description: "On-demand cab service for students",
-      price: 9999,
+      price: 99,
       icon: Car
     },
     {
       id: "shuttle",
       name: "Shuttle Service",
       description: "Regular shuttle routes for campus transport",
-      price: 15999,
+      price: 15,
       icon: Bus
     },
     {
       id: "rental",
       name: "Campus Rentals",
       description: "Bike and vehicle rentals for students",
-      price: 20000,
+      price: 20,
       icon: Bike
     }
   ]
