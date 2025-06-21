@@ -135,7 +135,7 @@ export default function PaymentSuccess() {
               {status === "paid" ? (
                 <CheckCircle2 className="h-16 w-16 text-primary" />
               ): status==="loading" ? (
-                <Loader className="h-16 w-16 text-destructive" />
+                <Loader className="h-16 w-16 text-primary" />
               ) : (
                 <XCircle className="h-16 w-16 text-destructive" />
               )}
