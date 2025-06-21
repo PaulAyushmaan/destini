@@ -138,7 +138,7 @@ export default function StudentManagement() {
     setLoading(true);
 
     try {
-      const defaultPassword = formData.fullName.toLowerCase().replace(/\s+/g, '');
+      const defaultPassword = formData.studentId;
       const registrationData = {
         name: formData.fullName,
         email: formData.email,
