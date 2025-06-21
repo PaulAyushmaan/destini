@@ -7,7 +7,7 @@ import { Car, Bus, Bike, CreditCard } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/components/ui/use-toast"
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const API_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:4000';
 
 export default function ServiceSelection() {
   const [selectedServices, setSelectedServices] = useState({
