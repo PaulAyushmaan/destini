@@ -49,7 +49,7 @@ app.use('/payments', require('./routes/payment.routes'));
 
 // Serve frontend in production
 if (process.env.NODE_ENV === 'production') {
-  const frontendPath = path.join(__dirname, '../../frontend/dist'); // Adjusted path for Render
+  const frontendPath = path.join(__dirname, '../frontend/dist'); // Adjusted path for Render
   
   // Verify the build exists
   if (!fs.existsSync(frontendPath)) {
