@@ -194,11 +194,11 @@ export default function Register() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center justify-between">
           <Link to="/" className="flex items-center gap-2 font-bold">
-            <Car className="h-6 w-6" />
+            <Car className="h-6 w-6 ml-4" />
             <span>Destini</span>
           </Link>
           <Link to="/">
-            <Button variant="ghost" size="sm" className="gap-2">
+            <Button variant="ghost" size="sm" className="gap-2 mr-2 ">
               <Home className="h-4 w-4" />
               Back to Home
             </Button>
