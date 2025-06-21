@@ -58,7 +58,7 @@ VITE_BASE_URL=http://localhost:4000
 VITE_MAPTITUDE_API_KEY=your_map_api_key
 ```
 
-For backend, you may also need:
+For backend, create a `.env` file in `backend/` with:
 
 ```
 PORT=4000
@@ -75,13 +75,14 @@ BACKEND_URL=http://localhost:4000
 #### Frontend
 
 ```sh
+cd frontend
 npm install
 ```
 
 #### Backend
 
 ```sh
-cd backend
+cd ../backend
 npm install
 ```
 
@@ -97,7 +98,7 @@ npm run dev
 #### Frontend
 
 ```sh
-cd ..
+cd ../frontend
 npm run dev
 ```
 
@@ -107,44 +108,59 @@ npm run dev
 
 ```
 destini/
-├── backend/           # Express.js API & Socket.io server
-│   ├── controllers/   # Route controllers
-│   ├── db/            # Database connection
-│   ├── middlewares/   # Auth, error handling, etc.
-│   ├── models/        # Mongoose models
-│   ├── routes/        # API routes
-│   ├── services/      # Business logic
-│   ├── app.js         # Express app setup
-│   ├── server.js      # Server entry point
-│   ├── socket.js      # Socket.io setup
-│   └── .env           # Environment variables for backend
-├── public/            # Static assets
-├── src/               # Frontend React app
-│   ├── components/    # UI components
-│   ├── contexts/      # React context providers
-│   ├── lib/           # Utilities, socket context
-│   ├── pages/         # Route pages (user, driver, college, etc.)
-│   ├── styles/        # Tailwind/global CSS
-│   └── main.jsx       # App entry point
-├── .env               # Environment variables
-├── package.json       # Frontend dependencies
-└── README.md          # Project documentation
+├── backend/                # Express.js API & Socket.io server
+│   ├── controllers/        # Route controllers
+│   ├── db/                 # Database connection
+│   ├── middlewares/        # Auth, error handling, etc.
+│   ├── models/             # Mongoose models
+│   ├── routes/             # API routes
+│   ├── scripts/            # Utility scripts
+│   ├── services/           # Business logic
+│   ├── app.js              # Express app setup
+│   ├── server.js           # Server entry point
+│   ├── socket.js           # Socket.io setup
+│   ├── package.json        # Backend dependencies
+│   └── README.md           # Backend documentation
+├── frontend/               # Frontend React app
+│   ├── public/             # Static assets (images, SVGs, etc.)
+│   ├── scripts/            # Frontend utility scripts
+│   ├── src/                # Source code
+│   │   ├── components/     # UI components (including shadcn/ui)
+│   │   ├── contexts/       # React context providers
+│   │   ├── lib/            # Utilities, socket context
+│   │   ├── pages/          # Route pages (user, driver, college, etc.)
+│   │   ├── styles/         # Tailwind/global CSS
+│   │   └── main.jsx        # App entry point
+│   ├── package.json        # Frontend dependencies
+│   ├── postcss.config.mjs  # PostCSS config
+│   ├── tailwind.config.js  # Tailwind config
+│   └── vite.config.js      # Vite config
+├── .env                    # Root environment variables
+├── LICENSE                 # License
+├── package.json            # Root dependencies (if any)
+└── README.md               # Project documentation
 ```
 
 ---
 
 ## Key Scripts
 
-### Frontend
+### Root
+
+- `npm run dev` — Start both frontend and backend in development mode concurrently
+- `npm run build` — Build frontend for production and install backend dependencies
+- `npm start` — Start backend in production mode (after build)
+
+### Frontend (from `frontend/` directory)
 
 - `npm run dev` — Start Vite dev server
 - `npm run build` — Build for production
 - `npm run preview` — Preview production build
 
-### Backend
+### Backend (from `backend/` directory)
 
 - `npm run dev` — Start backend with nodemon
-- `npm run start` — Start backend (production)
+- `npm start` — Start backend (production)
 
 ---
 
