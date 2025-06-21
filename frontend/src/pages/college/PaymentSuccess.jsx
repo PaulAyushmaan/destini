@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { useSearchParams, useNavigate } from "react-router-dom"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { CheckCircle2, XCircle } from "lucide-react"
+import { CheckCircle2, XCircle,Loader } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 
 const API_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:4000';
@@ -134,6 +134,8 @@ export default function PaymentSuccess() {
             <div className="flex justify-center">
               {status === "paid" ? (
                 <CheckCircle2 className="h-16 w-16 text-primary" />
+              ): status==="loading" ? (
+                <Loader className="h-16 w-16 text-destructive" />
               ) : (
                 <XCircle className="h-16 w-16 text-destructive" />
               )}
