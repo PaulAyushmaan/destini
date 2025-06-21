@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 
 const API_BASE = import.meta.env.VITE_BASE_URL || 'http://localhost:4000';
 
+console.log(import.meta.env.VITE_BASE_URL, 'API_BASE:', API_BASE);
 function Login() {
   const [formData, setFormData] = useState({
     email: '',

@@ -9,7 +9,7 @@ const LogoutButton = ({ onAfterLogout }) => {
   const handleLogout = async () => {
     try {
       // Call logout endpoint
-      const response = await fetch('http://localhost:4000/auth/logout', {
+      const response = await fetch(`${import.meta.env.VITE_BASE_URL || 'http://localhost:4000'}/auth/logout`, {
         method: 'POST',
         credentials: 'include'
       });
